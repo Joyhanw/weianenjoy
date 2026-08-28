@@ -1,0 +1,458 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI时代产品经理的底牌与认知升级 · 内部分享</title>
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg: #07070d; --bg2: #0f0f1a; --bg3: #18182b; --border: #2a2a4a;
+    --text: #e8e8f0; --text2: #9090b0; --text3: #58587a;
+    --gold: #f59e0b; --gold-dim: rgba(245,158,11,0.15);
+    --blue: #3b82f6; --blue-dim: rgba(59,130,246,0.12);
+    --purple: #8b5cf6;
+    --gradient: linear-gradient(135deg, var(--gold), var(--blue));
+    --radius: 16px;
+    --font: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", "Helvetica Neue", sans-serif;
+  }
+  html, body { height: 100%; font-family: var(--font); background: var(--bg); color: var(--text); overflow: hidden; user-select: none; }
+  #progress-bar { position: fixed; top: 0; left: 0; width: 100%; height: 3px; z-index: 100; background: var(--bg3); }
+  #progress-bar span { display: block; height: 100%; background: var(--gradient); transition: width 0.5s cubic-bezier(0.16,1,0.3,1); width: 0%; }
+  #sidebar-toggle { position: fixed; top: 14px; left: 16px; z-index: 200; background: rgba(15,15,26,0.85); backdrop-filter: blur(12px); border: 1px solid var(--border); color: var(--text2); width: 36px; height: 36px; border-radius: 8px; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+  #sidebar-toggle:hover { background: var(--bg3); color: var(--text); }
+  #sidebar { position: fixed; top: 0; left: 0; bottom: 0; width: 260px; background: rgba(10,10,20,0.96); backdrop-filter: blur(16px); border-right: 1px solid var(--border); z-index: 150; transform: translateX(-100%); transition: transform 0.35s cubic-bezier(0.16,1,0.3,1); display: flex; flex-direction: column; padding: 60px 0 20px; }
+  #sidebar.open { transform: translateX(0); }
+  #sidebar-header { padding: 0 16px 12px; font-size: 13px; font-weight: 700; color: var(--gold); letter-spacing: 1px; border-bottom: 1px solid var(--border); }
+  #sidebar-list { flex: 1; overflow-y: auto; padding: 8px 0; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+  #sidebar-list::-webkit-scrollbar { width: 3px; }
+  #sidebar-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  .sidebar-item { display: flex; align-items: center; padding: 10px 16px; font-size: 13px; color: var(--text2); cursor: pointer; transition: all 0.15s; border-left: 3px solid transparent; gap: 8px; }
+  .sidebar-item:hover { background: var(--bg2); color: var(--text); }
+  .sidebar-item.active { color: var(--gold); border-left-color: var(--gold); background: var(--gold-dim); }
+  .sidebar-item .num { font-size: 11px; color: var(--text3); min-width: 22px; font-weight: 600; }
+  #sidebar-mask { position: fixed; inset: 0; z-index: 140; background: rgba(0,0,0,0.5); opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+  #sidebar-mask.show { opacity: 1; pointer-events: auto; }
+  #slides { height: 100vh; width: 100vw; position: relative; overflow: hidden; }
+  .slide { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 60px 80px; opacity: 0; pointer-events: none; transition: opacity 0.55s cubic-bezier(0.16,1,0.3,1), transform 0.55s cubic-bezier(0.16,1,0.3,1); transform: translateY(24px) scale(0.98); }
+  .slide.active { opacity: 1; pointer-events: auto; transform: translateY(0) scale(1); }
+  .slide.prev { opacity: 0; pointer-events: none; transform: translateY(-24px) scale(0.98); }
+  .slide-inner { max-width: 1100px; width: 100%; max-height: 85vh; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+  .slide-inner::-webkit-scrollbar { width: 4px; }
+  .slide-inner::-webkit-scrollbar-track { background: transparent; }
+  .slide-inner::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+  #nav { position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 18px; z-index: 50; background: rgba(15,15,26,0.85); backdrop-filter: blur(12px); padding: 10px 20px; border-radius: 100px; border: 1px solid var(--border); }
+  #nav button { background: none; border: none; color: var(--text2); cursor: pointer; font-size: 18px; padding: 6px 10px; border-radius: 8px; transition: all 0.2s; font-family: var(--font); }
+  #nav button:hover { color: var(--text); background: var(--bg3); }
+  #nav button:disabled { opacity: 0.2; cursor: default; }
+  #dots { display: flex; gap: 6px; }
+  #dots span { width: 8px; height: 8px; border-radius: 50%; background: var(--bg3); cursor: pointer; transition: all 0.3s; }
+  #dots span.active { background: var(--gold); width: 24px; border-radius: 4px; }
+  #slide-num { font-size: 13px; color: var(--text3); min-width: 48px; text-align: center; }
+  #slide-total { font-size: 13px; color: var(--text3); }
+  #click-left, #click-right { position: fixed; top: 0; bottom: 0; width: 30%; z-index: 10; cursor: pointer; }
+  #click-left { left: 0; }
+  #click-right { right: 0; }
+  h1 { font-size: clamp(36px,5vw,64px); font-weight: 700; line-height: 1.2; background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  h2 { font-size: clamp(26px,3.2vw,42px); font-weight: 600; color: var(--text); margin-bottom: 12px; }
+  h3 { font-size: 20px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
+  h4 { font-size: 16px; font-weight: 600; color: var(--gold); margin-bottom: 6px; }
+  .subtitle { font-size: clamp(16px,1.6vw,22px); color: var(--text2); margin-top: 8px; line-height: 1.6; }
+  .gold-text { color: var(--gold); }
+  .blue-text { color: var(--blue); }
+  .text-muted { color: var(--text2); }
+  .text-small { font-size: 14px; color: var(--text3); }
+  .accent-line { width: 60px; height: 3px; background: var(--gradient); border-radius: 4px; margin-bottom: 20px; margin-top: 4px; }
+  .flex-row { display: flex; gap: 24px; flex-wrap: wrap; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  @media (max-width: 768px) { .grid-2,.grid-3 { grid-template-columns: 1fr; } .slide { padding: 40px 24px; } h1 { font-size: 28px; } h2 { font-size: 22px; } #nav { bottom: 16px; padding: 8px 14px; gap: 10px; } #click-left,#click-right { width: 20%; } }
+  .card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; transition: all 0.25s; }
+  .card:hover { border-color: rgba(245,158,11,0.3); }
+  .card-glow { border-color: transparent; background: linear-gradient(var(--bg2),var(--bg2)) padding-box, var(--gradient) border-box; }
+  .cognition-card, .ability-card, .methodology-card { cursor: pointer; }
+  .cognition-card:hover, .ability-card:hover, .methodology-card:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,0,0,0.3); }
+  .badge { display: inline-block; padding: 4px 14px; border-radius: 100px; font-size: 12px; font-weight: 600; letter-spacing: 0.5px; background: var(--gold-dim); color: var(--gold); margin-bottom: 12px; }
+  .badge-blue { background: var(--blue-dim); color: var(--blue); }
+  .badge-purple { background: rgba(139,92,246,0.15); color: var(--purple); }
+  .tag { display: inline-block; padding: 2px 12px; border-radius: 100px; font-size: 11px; font-weight: 500; }
+  .tag-gold { background: var(--gold-dim); color: var(--gold); }
+  .tag-blue { background: var(--blue-dim); color: var(--blue); }
+  .tag-purple { background: rgba(139,92,246,0.15); color: var(--purple); }
+  .cover { text-align: center; }
+  .cover .badge-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-bottom: 24px; }
+  .quote-block { padding: 20px 24px; border-left: 3px solid var(--gold); background: var(--bg2); border-radius: 0 var(--radius) var(--radius) 0; margin: 16px 0; }
+  .quote-block p { font-size: 18px; line-height: 1.7; color: var(--text); font-style: italic; }
+  .tool-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(200px,1fr)); gap: 12px; }
+  .tool-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; display: flex; align-items: center; gap: 12px; transition: all 0.2s; cursor: pointer; text-decoration: none; color: inherit; }
+  .tool-card:hover { border-color: var(--blue); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(59,130,246,0.1); }
+  .tool-card .emoji { font-size: 24px; flex-shrink: 0; }
+  .tool-card .name { font-weight: 600; font-size: 15px; }
+  .tool-card .desc { font-size: 12px; color: var(--text3); margin-top: 2px; }
+  .tool-card .ext-link { margin-left: auto; color: var(--text3); font-size: 14px; }
+  .tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  .tab-btn { padding: 8px 20px; border-radius: 100px; background: var(--bg2); border: 1px solid var(--border); color: var(--text2); cursor: pointer; font-size: 14px; font-family: var(--font); transition: all 0.2s; }
+  .tab-btn:hover { border-color: var(--text3); }
+  .tab-btn.active { background: var(--gold-dim); color: var(--gold); border-color: var(--gold); }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+  .prompt-box { background: var(--bg3); border: 1px solid var(--border); border-radius: 12px; padding: 20px; font-family: 'SF Mono','Menlo','Monaco',monospace; font-size: 14px; line-height: 1.8; color: var(--text2); position: relative; white-space: pre-wrap; }
+  .prompt-box .hl { color: var(--gold); }
+  .copy-btn { position: absolute; top: 12px; right: 12px; background: var(--bg2); border: 1px solid var(--border); color: var(--text2); padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 12px; font-family: var(--font); transition: all 0.2s; }
+  .copy-btn:hover { background: var(--bg); color: var(--text); }
+  .copy-btn.copied { background: var(--gold-dim); color: var(--gold); border-color: var(--gold); }
+  .challenge-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  @media (max-width:768px) { .challenge-grid { grid-template-columns: 1fr; } }
+  .challenge-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; cursor: pointer; transition: all 0.3s; min-height: 160px; display: flex; flex-direction: column; position: relative; overflow-y: auto; }
+  .challenge-card .front { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; flex: 1; }
+  .challenge-card .back { display: none; flex: 1; font-size: 14px; line-height: 1.7; color: var(--text2); }
+  .challenge-card.revealed .front { display: none; }
+  .challenge-card.revealed .back { display: flex; flex-direction: column; }
+  .challenge-card .click-hint { font-size: 12px; color: var(--text3); margin-top: 8px; }
+  .challenge-card.revealed { border-color: var(--gold); }
+  .checklist { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+  .checklist li { display: flex; align-items: flex-start; gap: 12px; padding: 10px 14px; background: var(--bg2); border-radius: 10px; border: 1px solid var(--border); cursor: pointer; transition: all 0.2s; font-size: 13px; line-height: 1.5; }
+  .checklist li:hover { border-color: rgba(245,158,11,0.3); }
+  .checklist .check { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--border); flex-shrink: 0; margin-top: 2px; display: flex; align-items: center; justify-content: center; transition: all 0.3s; font-size: 11px; color: transparent; }
+  .checklist li.checked .check { background: var(--gold); border-color: var(--gold); color: #000; }
+  .checklist li.checked { border-color: rgba(245,158,11,0.3); }
+  .checklist li.checked .label { color: var(--text2); text-decoration: line-through; }
+  .big-num { font-size: 72px; font-weight: 700; background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .modal-overlay { position: fixed; inset: 0; z-index: 300; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; }
+  .modal-overlay.show { display: flex; }
+  .modal-content { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 32px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; position: relative; animation: modalIn 0.25s ease; }
+  @keyframes modalIn { from { opacity: 0; transform: translateY(16px) scale(0.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
+  .modal-close { position: absolute; top: 12px; right: 16px; font-size: 20px; color: var(--text3); cursor: pointer; transition: color 0.2s; line-height: 1; }
+  .modal-close:hover { color: var(--text); }
+  .closing h1 { margin-bottom: 16px; }
+  .closing .tagline { font-size: clamp(18px,2vw,26px); color: var(--text2); line-height: 1.7; }
+</style>
+</head>
+<body>
+
+<div id="progress-bar"><span id="progress-fill"></span></div>
+<div id="sidebar-mask" onclick="toggleSidebar()"></div>
+<button id="sidebar-toggle" onclick="toggleSidebar()" title="目录">☰</button>
+<div id="sidebar">
+  <div id="sidebar-header">📑 目录导航</div>
+  <div id="sidebar-list"></div>
+</div>
+<div id="slides"></div>
+<div id="nav">
+  <button id="prev-btn" title="上一页">←</button>
+  <div id="dots"></div>
+  <span id="slide-num">1</span>
+  <span id="slide-total" style="color:var(--text3)">/ 15</span>
+  <button id="next-btn" title="下一页">→</button>
+</div>
+
+<div class="modal-overlay" id="modal-cog-0" onclick="closeModal('cog-0')"><div class="modal-content" onclick="event.stopPropagation()"><div class="modal-close" onclick="closeModal('cog-0')">✕</div><h3 style="margin-bottom:10px">认知 1：AI 工具 ≠ 思考能力</h3><div style="font-size:14px;line-height:1.8;color:var(--text2)"><p><strong>核心观点：</strong>漂亮是加分项，<strong style="color:var(--gold)">逻辑才是基本盘</strong>。</p><p style="margin-top:8px">很多人以为用 AI 生成漂亮的报告就是能力强。但其实没有逻辑线的话，再好看的 PPT 也是空壳。AI 可以润色、排版、生成图表 — 但 <strong>「为什么要分析这个、分析完结论是什么」</strong> 这个链条必须由人来搭。</p><p style="margin-top:8px"><strong>分享时你可以问大家：</strong>你上次用 AI 写的报告，去掉 AI 的润色后，你自己的想法还在吗？</p></div></div></div>
+<div class="modal-overlay" id="modal-cog-1" onclick="closeModal('cog-1')"><div class="modal-content" onclick="event.stopPropagation()"><div class="modal-close" onclick="closeModal('cog-1')">✕</div><h3 style="margin-bottom:10px">认知 2：学 AI ≠ 学编程</h3><div style="font-size:14px;line-height:1.8;color:var(--text2)"><p><strong>核心观点：</strong>你不需要写代码。把你做判断的<strong style="color:var(--gold)">规则讲出来</strong>。</p><p style="margin-top:8px">很多非技术背景的同事会担心「我不懂编程，是不是没法用 AI？」其实恰恰相反。AI 产品经理需要的不是你写代码，而是你把你做业务判断的 <strong>规则和经验</strong> 讲清楚。你是灵魂提供者，不是码农。</p><p style="margin-top:8px"><strong>分享时你可以问大家：</strong>你的工作中，有哪些判断是有规则的？这些规则能写下来吗？</p></div></div></div>
+<div class="modal-overlay" id="modal-cog-2" onclick="closeModal('cog-2')"><div class="modal-content" onclick="event.stopPropagation()"><div class="modal-close" onclick="closeModal('cog-2')">✕</div><h3 style="margin-bottom:10px">认知 3：AI 产品经理才是主导者</h3><div style="font-size:14px;line-height:1.8;color:var(--text2)"><p><strong>核心观点：</strong><strong style="color:var(--gold)">判断逻辑只有行业专家才有</strong>。</p><p style="margin-top:8px">代码可以外包、算法可以调包、UI 可以生成。但 <strong>「这个业务到底怎么跑的、哪个才是关键指标」</strong> 只有真正懂业务的人知道。AI 产品经理（即业务方）才是真正的造物主，而写代码的只是实现方。</p><p style="margin-top:8px"><strong>分享时你可以问大家：</strong>如果现在把你们业务的所有代码清空，你能把业务规则还原出来吗？</p></div></div></div>
+<div class="modal-overlay" id="modal-cog-3" onclick="closeModal('cog-3')"><div class="modal-content" onclick="event.stopPropagation()"><div class="modal-close" onclick="closeModal('cog-3')">✕</div><h3 style="margin-bottom:10px">认知 4 & 5：信息处理 vs 深度阅读</h3><div style="font-size:14px;line-height:1.8;color:var(--text2)"><p><strong>核心观点：</strong>AI做<strong style="color:var(--blue)">信息处理</strong>，人类做<strong style="color:var(--gold)">深度阅读</strong>。</p><p style="margin-top:8px">AI 擅长做"信息处理"类的任务，但人类的「感受力」「想象力」「同理心」是偷不走的。AI 是垂直专家，人类的优势是跨界整合。这才是你真正的护城河。</p><p style="margin-top:8px"><strong>分享时你可以问大家：</strong>你的工作里，哪些是 AI 可以替代的「信息处理」？哪些是只有你才能做的「深度判断」？</p></div></div></div>
+<div class="modal-overlay" id="modal-ability-0" onclick="closeModal('ability-0')"><div class="modal-content" onclick="event.stopPropagation()"><div class="modal-close" onclick="closeModal('ability-0')">✕</div><h3 style="margin-bottom:10px">理解能力 — 听懂业务在做什么</h3><div style="font-size:14px;line-height:1.8;color:var(--text2)"><p><strong>这是所有工作的天花板。</strong></p><p style="margin-top:8px">理解能力的本质：在大量信息中判断哪个是关键。业务方说了 10 分钟，你可能需要从中提取出真正要解决的问题。3 个数据指标摆在面前，你能否识别出哪个才是北极星？</p><p style="margin-top:8px"><strong>训练方法：</strong>每次听完需求后，用 3 句话总结核心问题，讲给别人听，看对方是否认可。</p><p style="margin-top:8px"><strong>AI 辅助：</strong>可以用 AI 帮你整理会议记录，但「哪些是关键」必须你自己判断。</p></div></div></div>
+<div class="modal-overlay" id="modal-ability-1" onclick="closeModal('ability-1')"><div class="modal-content" onclick="event.stopPropagation()"><div class="modal-close" onclick="closeModal('ability-1')">✕</div><h3 style="margin-bottom:10px">叙事能力 — 把散乱信息串成逻辑线</h3><div style="font-size:14px;line-height:1.8;color:var(--text2)"><p><strong>这是你的核心竞争力。</strong></p><p style="margin-top:8px">数据不会说话，是你在替它说话。同样的数据，不同的人讲出来，结论可能完全不同。叙事能力强的人，能用一条清晰的逻辑线把散乱的信息串起来，让对方听完就知道重点在哪。</p><p style="margin-top:8px"><strong>检验标准：</strong>你能不能把你的产品/功能用一句话跟不懂业务的人讲明白？</p><p style="margin-top:8px"><strong>AI 辅助：</strong>让 AI 帮你理清逻辑结构、优化表达，但「核心信息」必须由你来定。</p></div></div></div>
+<div class="modal-overlay" id="modal-ability-2" onclick="closeModal('ability-2')"><div class="modal-content" onclick="event.stopPropagation()"><div class="modal-close" onclick="closeModal('ability-2')">✕</div><h3 style="margin-bottom:10px">积累能力 — 体系化沉淀</h3><div style="font-size:14px;line-height:1.8;color:var(--text2)"><p><strong>偶尔靠灵感，长期靠积累。</strong></p><p style="margin-top:8px">积累不是简单的记笔记，而是一种体系化的知识管理。开过的会、踩过的坑、做过的项目，都应该沉淀为可复用的资产。</p><p style="margin-top:8px"><strong>具体做法：</strong><br>· 每次会议后记录决策和理由<br>· 每次踩坑后写一条「如果重来我会怎么做」<br>· 每个月整理一次方法论卡片</p><p style="margin-top:8px"><strong>AI 辅助：</strong>用 AI 帮你整理、分类、提炼要点，但「记录习惯」必须自己养成。</p></div></div></div>
+<div class="modal-overlay" id="modal-method-0" onclick="closeModal('method-0')"><div class="modal-content" onclick="event.stopPropagation()"><div class="modal-close" onclick="closeModal('method-0')">✕</div><h3 style="margin-bottom:10px">🔍 业务规则逆向工程</h3><div style="font-size:14px;line-height:1.8;color:var(--text2)">从存量系统中反向挖掘业务规则的系统方法论。核心原则：<strong>「代码即真理，文档即谎言」</strong>。<br><br><strong>四层框架：</strong><br>1️⃣ 业务事实层 — 数据库·字段·状态机<br>2️⃣ 业务模型层 — 约束·权限·流程<br>3️⃣ 规则挖掘层 — 考古·审计·可视化<br>4️⃣ 资产沉淀层 — 可复用规则库</div><div style="margin-top:12px;display:flex;gap:6px;flex-wrap:wrap"><span class="tag tag-gold">规则挖掘</span> <span class="tag tag-gold">边界审计</span> <span class="tag tag-gold">知识沉淀</span></div></div></div>
+<div class="modal-overlay" id="modal-method-1" onclick="closeModal('method-1')"><div class="modal-content" onclick="event.stopPropagation()"><div class="modal-close" onclick="closeModal('method-1')">✕</div><h3 style="margin-bottom:10px">🧠 第一性原理</h3><div style="font-size:14px;line-height:1.8;color:var(--text2)">回归问题本质，拆解到不可分的基本元素，再重新构建思考框架。<br><br><strong>实操步骤：</strong><br>1️⃣ 明确当前方案是什么<br>2️⃣ 追问「为什么这样做」直到根本原因<br>3️⃣ 拆解成不可再分的基本事实<br>4️⃣ 基于基本事实重新构建方案</div><div style="margin-top:12px;display:flex;gap:6px;flex-wrap:wrap"><span class="tag tag-purple">本质思考</span> <span class="tag tag-purple">拆解能力</span> <span class="tag tag-purple">创新</span></div></div></div>
+<div class="modal-overlay" id="modal-method-2" onclick="closeModal('method-2')"><div class="modal-content" onclick="event.stopPropagation()"><div class="modal-close" onclick="closeModal('method-2')">✕</div><h3 style="margin-bottom:10px">📖 用户故事地图</h3><div style="font-size:14px;line-height:1.8;color:var(--text2)">从用户旅程出发，结构化梳理需求全景，确保不遗漏关键路径。<br><br><strong>核心要素：</strong><br>• 横向：用户旅程按时间线展开<br>• 纵向：每个步骤的细节需求分层<br>• 优先级：MVP > 第二阶段 > 理想态</div><div style="margin-top:12px;display:flex;gap:6px;flex-wrap:wrap"><span class="tag tag-blue">用户旅程</span> <span class="tag tag-blue">需求全景</span> <span class="tag tag-blue">MVP</span></div></div></div>
+<div class="modal-overlay" id="modal-method-3" onclick="closeModal('method-3')"><div class="modal-content" onclick="event.stopPropagation()"><div class="modal-close" onclick="closeModal('method-3')">✕</div><h3 style="margin-bottom:10px">📊 RICE 优先级模型</h3><div style="font-size:14px;line-height:1.8;color:var(--text2)">用数据说话的优先级评估模型，替代「感觉排需求」。<br><br><strong>公式：</strong><br>RICE Score = (Reach × Impact × Confidence) / Effort<br><br><strong>维度解释：</strong><br>• Reach — 影响多少用户/业务<br>• Impact — 对核心指标的影响程度<br>• Confidence — 有多大把握<br>• Effort — 开发/运营成本</div><div style="margin-top:12px;display:flex;gap:6px;flex-wrap:wrap"><span class="tag tag-gold">优先级</span> <span class="tag tag-gold">量化决策</span> <span class="tag tag-gold">数据驱动</span></div></div></div>
+<div class="modal-overlay" id="modal-method-4" onclick="closeModal('method-4')"><div class="modal-content" onclick="event.stopPropagation()"><div class="modal-close" onclick="closeModal('method-4')">✕</div><h3 style="margin-bottom:10px">🔄 PDCA 闭环</h3><div style="font-size:14px;line-height:1.8;color:var(--text2)">Plan-Do-Check-Act，最基础也最强大的持续改进框架。<br><br><strong>AI时代的 PDCA：</strong><br>• Plan：用 AI 生成多套方案对比<br>• Do：AI 辅助执行，人做关键决策<br>• Check：AI 自动汇总数据和分析<br>• Act：人的判断决定下一步方向</div><div style="margin-top:12px;display:flex;gap:6px;flex-wrap:wrap"><span class="tag tag-blue">持续改进</span> <span class="tag tag-blue">闭环思维</span> <span class="tag tag-blue">迭代</span></div></div></div>
+<div class="modal-overlay" id="modal-method-5" onclick="closeModal('method-5')"><div class="modal-content" onclick="event.stopPropagation()"><div class="modal-close" onclick="closeModal('method-5')">✕</div><h3 style="margin-bottom:10px">🎯 MECE 原则</h3><div style="font-size:14px;line-height:1.8;color:var(--text2)">Mutually Exclusive, Collectively Exhaustive — 相互独立，完全穷尽。<br><br><strong>使用场景：</strong><br>• 需求分类：确保不重叠、不遗漏<br>• 问题拆解：结构化分析根因<br>• 方案对比：穷尽所有可能性</div><div style="margin-top:12px;display:flex;gap:6px;flex-wrap:wrap"><span class="tag tag-purple">结构化</span> <span class="tag tag-purple">分类</span> <span class="tag tag-purple">分析框架</span></div></div></div>
+<div class="modal-overlay" id="modal-tool-chat-0" onclick="closeModal('tool-chat-0')"><div class="modal-content" onclick="event.stopPropagation()"><div class="modal-close" onclick="closeModal('tool-chat-0')">✕</div><div style="display:flex;align-items:center;gap:12px;margin-bottom:10px"><span style="font-size:36px">🤖</span><div><h3 style="margin:0">ChatGPT</h3><p style="font-size:14px;color:var(--text2);margin:2px 0 0">通用对话 · 推理 · 创意</p></div></div><div style="font-size:14px;line-height:1.8;color:var(--text2)"><strong style="color:var(--text)">核心功能：</strong><ul style="margin-top:4px"><li>✨ 多模态理解（图文语音）</li><li>✨ GPTs 自定义智能体</li><li>✨ 代码解释器/数据分析</li><li>✨ DALL·E 绘图集成</li></ul></div><a href="https://chat.openai.com" target="_blank" rel="noopener" style="display:inline-block;margin-top:12px;padding:8px 20px;background:var(--gold-dim);color:var(--gold);border-radius:8px;text-decoration:none;font-size:14px;font-weight:600">🔗 打开 ChatGPT</a></div></div>
+<div class="modal-overlay" id="modal-tool-chat-1" onclick="closeModal('tool-chat-1')"><div class="modal-content" onclick="event.stopPropagation()"><div class="modal-close" onclick="closeModal('tool-chat-1')">✕</div><div style="display:flex;align-items:center;gap:12px;margin-bottom:10px"><span style="font-size:36px">🧠</span><div><h3 style="margin:0">Claude</h3><p style="font-size:14px;color:var(--text2);margin:2px 0 0">深度分析 · 长文 · 精准</p></div></div><div style="font-size:14px;line-height:1.8;color:var(--text2)"><strong style="color:var(--text)">核心功能：</strong><ul style="margin-top:4px"><li>✨ 超大上下文（200K）</li><li>✨ 精准指令遵循</li><li>✨ 深度分析/推理</li><li>✨ Artifacts 实时内容生成</li></ul></div><a href="https://claude.ai" target="_blank" rel="noopener" style="display:inline-block;margin-top:12px;padding:8px 20px;background:var(--gold-dim);color:var(--gold);border-radius:8px;text-decoration:none;font-size:14px;font-weight:600">🔗 打开 Claude</a></div></div>
+<div class="modal-overlay" id="modal-tool-chat-2" onclick="closeModal('tool-chat-2')"><div class="modal-content" onclick="event.stopPropagation()"><div class="modal-close" onclick="closeModal('tool-chat-2')">✕</div><div style="display:flex;align-items:center;gap:12px;margin-bottom:10px"><span style="font-size:36px">📚</span><div><h3 style="margin:0">Kimi</h3><p style="font-size:14px;color:var(--text2);margin:2px 0 0">超长上下文 · 文献分析</p></div></div><div style="font-size:14px;line-height:1.8;color:var(--text2)"><strong style="color:var(--text)">核心功能：</strong><ul style="margin-top:4px"><li>✨ 200万字超长上下文</li><li>✨ 优质中文理解</li><li>✨ 联网搜索能力</li><li>✨ 文件多格式解析</li></ul></div><a href="https://kimi.moonshot.cn" target="_blank" rel="noopener" style="display:inline-block;margin-top:12px;padding:8px 20px;background:var(--gold-dim);color:var(--gold);border-radius:8px;text-decoration:none;font-size:14px;font-weight:600">🔗 打开 Kimi</a></div></div>
+<div class="modal-overlay" id="modal-tool-chat-3" onclick="closeModal('tool-chat-3')"><div class="modal-content" onclick="event.stopPropagation()"><div class="modal-close" onclick="closeModal('tool-chat-3')">✕</div><div style="display:flex;align-items:center;gap:12px;margin-bottom:10px"><span style="font-size:36px">☁️</span><div><h3 style="margin:0">通义千问</h3><p style="font-size:14px;color:var(--text2);margin:2px 0 0">国产 · 多模态 · 效率</p></div></div><div style="font-size:14px;line-height:1.8;color:var(--text2)"><strong style="color:var(--text)">核心功能：</strong><ul style="margin-top:4px"><li>✨ 阿里生态集成</li><li>✨ 多模态理解</li><li>✨ 文档/PPT生成</li><li>✨ 企业级数据安全</li></ul></div><a href="https://tongyi.aliyun.com" target="_blank" rel="noopener" style="display:inline-block;margin-top:12px;padding:8px 20px;background:var(--gold-dim);color:var(--gold);border-radius:8px;text-decoration:none;font-size:14px;font-weight:600">🔗 打开 通义千问</a></div></div>
+<div class="modal-overlay" id="modal-tool-chat-4" onclick="closeModal('tool-chat-4')"><div class="modal-content" onclick="event.stopPropagation()"><div class="modal-close" onclick="closeModal('tool-chat-4')">✕</div><div style="display:flex;align-items:center;gap:12px;margin-bottom:10px"><span style="font-size:36px">🔍</span><div><h3 style="margin:0">DeepSeek</h3><p style="font-size:14px;color:var(--text2);margin:2px 0 0">推理 · 代码 · 性价比</p></div></div><div style="font-size:14px;line-height:1.8;color:var(--text2)"><strong style="color:var(--text)">核心功能：</strong><ul style="margin-top:4px"><li>✨ 强推理能力</li><li>✨ 高性价比API</li><li>✨ 开源模型生态</li><li>✨ 代码能力强</li></ul></div><a href="https://chat.deepseek.com" target="_blank" rel="noopener" style="display:inline-block;margin-top:12px;padding:8px 20px;background:var(--gold-dim);color:var(--gold);border-radius:8px;text-decoration:none;font-size:14px;font-weight:600">🔗 打开 DeepSeek</a></div></div>
+<div class="modal-overlay" id="modal-tool-chat-5" onclick="closeModal('tool-chat-5')"><div class="modal-content" onclick="event.stopPropagation()"><div class="modal-close" onclick="closeModal('tool-chat-5')">✕</div><div style="display:flex;align-items:center;gap:12px;margin-bottom:10px"><span style="font-size:36px">📖</span><div><h3 style="margin:0">豆包</h3><p style="font-size:14px;color:var(--text2);margin:2px 0 0">字节系 · 创意 · 效率</p></div></div><div style="font-size:14px;line-height:1.8;color:var(--text2)"><strong style="color:var(--text)">核心功能：</strong><ul style="margin-top:4px"><li>✨ 抖音生态数据</li><li>✨ 创意文案生成</li><li>✨ 多轮对话记忆</li><li>✨ 免费使用</li></ul></div><a href="https://www.doubao.com" target="_blank" rel="noopener" style="display:inline-block;margin-top:12px;padding:8px 20px;background:var(--gold-dim);color:var(--gold);border-radius:8px;text-decoration:none;font-size:14px;font-weight:600">🔗 打开 豆包</a></div></div>
+<div class="modal-overlay" id="modal-tool-design-0" onclick="closeModal('tool-design-0')"><div class="modal-content" onclick="event.stopPropagation()"><div class="modal-close" onclick="closeModal('tool-design-0')">✕</div><div style="display:flex;align-items:center;gap:12px;margin-bottom:10px"><span style="font-size:36px">🎨</span><div><h3 style="margin:0">Midjourney</h3><p style="font-size:14px;color:var(--text2);margin:2px 0 0">AI 绘图 · 创意视觉</p></div></div><div style="font-size:14px;line-height:1.8;color:var(--text2)"><strong style="color:var(--text)">核心功能：</strong><ul style="margin-top:4px"><li>✨ 超高画质出图</li><li>✨ 风格一致性控制</li><li>✨ V6版本真实感强</li><li>✨ 参数化精准控制</li></ul></div><a href="https://www.midjourney.com" target="_blank" rel="noopener" style="display:inline-block;margin-top:12px;padding:8px 20px;background:var(--gold-dim);color:var(--gold);border-radius:8px;text-decoration:none;font-size:14px;font-weight:600">🔗 打开 Midjourney</a></div></div>
+<div class="modal-overlay" id="modal-tool-design-1" onclick="closeModal('tool-design-1')"><div class="modal-content" onclick="event.stopPropagation()"><div class="modal-close" onclick="closeModal('tool-design-1')">✕</div><div style="display:flex;align-items:center;gap:12px;margin-bottom:10px"><span style="font-size:36px">✨</span><div><h3 style="margin:0">即梦</h3><p style="font-size:14px;color:var(--text2);margin:2px 0 0">国产 AI 绘图 · 剪映生态</p></div></div><div style="font-size:14px;line-height:1.8;color:var(--text2)"><strong style="color:var(--text)">核心功能：</strong><ul style="margin-top:4px"><li>✨ 字节跳动出品</li><li>✨ 剪映生态集成</li><li>✨ 中文理解好</li><li>✨ 视频生成能力</li></ul></div><a href="https://jimeng.jianying.com" target="_blank" rel="noopener" style="display:inline-block;margin-top:12px;padding:8px 20px;background:var(--gold-dim);color:var(--gold);border-radius:8px;text-decoration:none;font-size:14px;font-weight:600">🔗 打开 即梦</a></div></div>
+<div class="modal-overlay" id="modal-tool-design-2" onclick="closeModal('tool-design-2')"><div class="modal-content" onclick="event.stopPropagation()"><div class="modal-close" onclick="closeModal('tool-design-2')">✕</div><div style="display:flex;align-items:center;gap:12px;margin-bottom:10px"><span style="font-size:36px">🖌️</span><div><h3 style="margin:0">Canva</h3><p style="font-size:14px;color:var(--text2);margin:2px 0 0">AI 设计 · 一键排版</p></div></div><div style="font-size:14px;line-height:1.8;color:var(--text2)"><strong style="color:var(--text)">核心功能：</strong><ul style="margin-top:4px"><li>✨ 模板海量覆盖</li><li>✨ AI 自动排版</li><li>✨ 团队协作共享</li><li>✨ 品牌套件管理</li></ul></div><a href="https://www.canva.com" target="_blank" rel="noopener" style="display:inline-block;margin-top:12px;padding:8px 20px;background:var(--gold-dim);color:var(--gold);border-radius:8px;text-decoration:none;font-size:14px;font-weight:600">🔗 打开 Canva</a></div></div>
+<div class="modal-overlay" id="modal-tool-design-3" onclick="closeModal('tool-design-3')"><div class="modal-content" onclick="event.stopPropagation()"><div class="modal-close" onclick="closeModal('tool-design-3')">✕</div><div style="display:flex;align-items:center;gap:12px;margin-bottom:10px"><span style="font-size:36px">📐</span><div><h3 style="margin:0">Figma AI</h3><p style="font-size:14px;color:var(--text2);margin:2px 0 0">UI 设计 · AI 辅助</p></div></div><div style="font-size:14px;line-height:1.8;color:var(--text2)"><strong style="color:var(--text)">核心功能：</strong><ul style="margin-top:4px"><li>✨ AI 自动生成组件</li><li>✨ 设计稿转代码</li><li>✨ 实时协作</li><li>✨ 插件生态丰富</li></ul></div><a href="https://www.figma.com" target="_blank" rel="noopener" style="display:inline-block;margin-top:12px;padding:8px 20px;background:var(--gold-dim);color:var(--gold);border-radius:8px;text-decoration:none;font-size:14px;font-weight:600">🔗 打开 Figma AI</a></div></div>
+<div class="modal-overlay" id="modal-tool-design-4" onclick="closeModal('tool-design-4')"><div class="modal-content" onclick="event.stopPropagation()"><div class="modal-close" onclick="closeModal('tool-design-4')">✕</div><div style="display:flex;align-items:center;gap:12px;margin-bottom:10px"><span style="font-size:36px">🎬</span><div><h3 style="margin:0">Pika</h3><p style="font-size:14px;color:var(--text2);margin:2px 0 0">AI 视频生成</p></div></div><div style="font-size:14px;line-height:1.8;color:var(--text2)"><strong style="color:var(--text)">核心功能：</strong><ul style="margin-top:4px"><li>✨ 文字/图片转视频</li><li>✨ 局部修改功能</li><li>✨ 风格迁移</li><li>✨ 快速生成</li></ul></div><a href="https://pika.art" target="_blank" rel="noopener" style="display:inline-block;margin-top:12px;padding:8px 20px;background:var(--gold-dim);color:var(--gold);border-radius:8px;text-decoration:none;font-size:14px;font-weight:600">🔗 打开 Pika</a></div></div>
+<div class="modal-overlay" id="modal-tool-code-0" onclick="closeModal('tool-code-0')"><div class="modal-content" onclick="event.stopPropagation()"><div class="modal-close" onclick="closeModal('tool-code-0')">✕</div><div style="display:flex;align-items:center;gap:12px;margin-bottom:10px"><span style="font-size:36px">⚡</span><div><h3 style="margin:0">Cursor</h3><p style="font-size:14px;color:var(--text2);margin:2px 0 0">AI 编程 IDE</p></div></div><div style="font-size:14px;line-height:1.8;color:var(--text2)"><strong style="color:var(--text)">核心功能：</strong><ul style="margin-top:4px"><li>✨ VSCode 兼容</li><li>✨ Tab 自动补全</li><li>✨ 多文件编辑（Composer）</li><li>✨ 上下文感知重构</li></ul></div><a href="https://www.cursor.com" target="_blank" rel="noopener" style="display:inline-block;margin-top:12px;padding:8px 20px;background:var(--gold-dim);color:var(--gold);border-radius:8px;text-decoration:none;font-size:14px;font-weight:600">🔗 打开 Cursor</a></div></div>
+<div class="modal-overlay" id="modal-tool-code-1" onclick="closeModal('tool-code-1')"><div class="modal-content" onclick="event.stopPropagation()"><div class="modal-close" onclick="closeModal('tool-code-1')">✕</div><div style="display:flex;align-items:center;gap:12px;margin-bottom:10px"><span style="font-size:36px">👨‍💻</span><div><h3 style="margin:0">GitHub Copilot</h3><p style="font-size:14px;color:var(--text2);margin:2px 0 0">代码补全 · AI 编程</p></div></div><div style="font-size:14px;line-height:1.8;color:var(--text2)"><strong style="color:var(--text)">核心功能：</strong><ul style="margin-top:4px"><li>✨ IDE深度集成</li><li>✨ PR 代码审查</li><li>✨ 终端命令行建议</li><li>✨ 海量开源知识训练</li></ul></div><a href="https://github.com/features/copilot" target="_blank" rel="noopener" style="display:inline-block;margin-top:12px;padding:8px 20px;background:var(--gold-dim);color:var(--gold);border-radius:8px;text-decoration:none;font-size:14px;font-weight:600">🔗 打开 GitHub Copilot</a></div></div>
+<div class="modal-overlay" id="modal-tool-code-2" onclick="closeModal('tool-code-2')"><div class="modal-content" onclick="event.stopPropagation()"><div class="modal-close" onclick="closeModal('tool-code-2')">✕</div><div style="display:flex;align-items:center;gap:12px;margin-bottom:10px"><span style="font-size:36px">🧩</span><div><h3 style="margin:0">Claude Code</h3><p style="font-size:14px;color:var(--text2);margin:2px 0 0">CLI 编程助手</p></div></div><div style="font-size:14px;line-height:1.8;color:var(--text2)"><strong style="color:var(--text)">核心功能：</strong><ul style="margin-top:4px"><li>✨ 终端原生体验</li><li>✨ 全项目理解</li><li>✨ Git 工作流集成</li><li>✨ 自主编写/修复代码</li></ul></div><a href="https://claude.ai/code" target="_blank" rel="noopener" style="display:inline-block;margin-top:12px;padding:8px 20px;background:var(--gold-dim);color:var(--gold);border-radius:8px;text-decoration:none;font-size:14px;font-weight:600">🔗 打开 Claude Code</a></div></div>
+<div class="modal-overlay" id="modal-tool-code-3" onclick="closeModal('tool-code-3')"><div class="modal-content" onclick="event.stopPropagation()"><div class="modal-close" onclick="closeModal('tool-code-3')">✕</div><div style="display:flex;align-items:center;gap:12px;margin-bottom:10px"><span style="font-size:36px">🌊</span><div><h3 style="margin:0">Windsurf</h3><p style="font-size:14px;color:var(--text2);margin:2px 0 0">AI 编程 IDE · 流式</p></div></div><div style="font-size:14px;line-height:1.8;color:var(--text2)"><strong style="color:var(--text)">核心功能：</strong><ul style="margin-top:4px"><li>✨ Cascade 智能体</li><li>✨ 全项目感知</li><li>✨ 自动诊断修复</li><li>✨ 免费使用</li></ul></div><a href="https://codeium.com/windsurf" target="_blank" rel="noopener" style="display:inline-block;margin-top:12px;padding:8px 20px;background:var(--gold-dim);color:var(--gold);border-radius:8px;text-decoration:none;font-size:14px;font-weight:600">🔗 打开 Windsurf</a></div></div>
+<div class="modal-overlay" id="modal-tool-code-4" onclick="closeModal('tool-code-4')"><div class="modal-content" onclick="event.stopPropagation()"><div class="modal-close" onclick="closeModal('tool-code-4')">✕</div><div style="display:flex;align-items:center;gap:12px;margin-bottom:10px"><span style="font-size:36px">🤖</span><div><h3 style="margin:0">Cline</h3><p style="font-size:14px;color:var(--text2);margin:2px 0 0">VSCode AI 助手</p></div></div><div style="font-size:14px;line-height:1.8;color:var(--text2)"><strong style="color:var(--text)">核心功能：</strong><ul style="margin-top:4px"><li>✨ 自主编码智能体</li><li>✨ 终端操作</li><li>✨ 浏览器集成</li><li>✨ MCP 工具扩展</li></ul></div><a href="https://cline.bot" target="_blank" rel="noopener" style="display:inline-block;margin-top:12px;padding:8px 20px;background:var(--gold-dim);color:var(--gold);border-radius:8px;text-decoration:none;font-size:14px;font-weight:600">🔗 打开 Cline</a></div></div>
+<div class="modal-overlay" id="modal-tool-doc-0" onclick="closeModal('tool-doc-0')"><div class="modal-content" onclick="event.stopPropagation()"><div class="modal-close" onclick="closeModal('tool-doc-0')">✕</div><div style="display:flex;align-items:center;gap:12px;margin-bottom:10px"><span style="font-size:36px">📝</span><div><h3 style="margin:0">Notion AI</h3><p style="font-size:14px;color:var(--text2);margin:2px 0 0">文档 · 知识库 · AI 写作</p></div></div><div style="font-size:14px;line-height:1.8;color:var(--text2)"><strong style="color:var(--text)">核心功能：</strong><ul style="margin-top:4px"><li>✨ 文档 + 数据库一体</li><li>✨ AI 写作辅助</li><li>✨ 知识库问答</li><li>✨ 项目管理集成</li></ul></div><a href="https://www.notion.so" target="_blank" rel="noopener" style="display:inline-block;margin-top:12px;padding:8px 20px;background:var(--gold-dim);color:var(--gold);border-radius:8px;text-decoration:none;font-size:14px;font-weight:600">🔗 打开 Notion AI</a></div></div>
+<div class="modal-overlay" id="modal-tool-doc-1" onclick="closeModal('tool-doc-1')"><div class="modal-content" onclick="event.stopPropagation()"><div class="modal-close" onclick="closeModal('tool-doc-1')">✕</div><div style="display:flex;align-items:center;gap:12px;margin-bottom:10px"><span style="font-size:36px">✈️</span><div><h3 style="margin:0">飞书智能伙伴</h3><p style="font-size:14px;color:var(--text2);margin:2px 0 0">协作 · 会议 · AI 助手</p></div></div><div style="font-size:14px;line-height:1.8;color:var(--text2)"><strong style="color:var(--text)">核心功能：</strong><ul style="margin-top:4px"><li>✨ 飞书生态深度集成</li><li>✨ 会议纪要自动生成</li><li>✨ 文档 AI 写作</li><li>✨ 多维表格智能分析</li></ul></div><a href="https://www.feishu.cn" target="_blank" rel="noopener" style="display:inline-block;margin-top:12px;padding:8px 20px;background:var(--gold-dim);color:var(--gold);border-radius:8px;text-decoration:none;font-size:14px;font-weight:600">🔗 打开 飞书智能伙伴</a></div></div>
+<div class="modal-overlay" id="modal-tool-doc-2" onclick="closeModal('tool-doc-2')"><div class="modal-content" onclick="event.stopPropagation()"><div class="modal-close" onclick="closeModal('tool-doc-2')">✕</div><div style="display:flex;align-items:center;gap:12px;margin-bottom:10px"><span style="font-size:36px">📊</span><div><h3 style="margin:0">Gamma</h3><p style="font-size:14px;color:var(--text2);margin:2px 0 0">AI 生成 PPT/文档</p></div></div><div style="font-size:14px;line-height:1.8;color:var(--text2)"><strong style="color:var(--text)">核心功能：</strong><ul style="margin-top:4px"><li>✨ 一句话生成 PPT</li><li>✨ 多种主题模板</li><li>✨ 实时协作编辑</li><li>✨ 嵌入多媒体内容</li></ul></div><a href="https://gamma.app" target="_blank" rel="noopener" style="display:inline-block;margin-top:12px;padding:8px 20px;background:var(--gold-dim);color:var(--gold);border-radius:8px;text-decoration:none;font-size:14px;font-weight:600">🔗 打开 Gamma</a></div></div>
+<div class="modal-overlay" id="modal-tool-doc-3" onclick="closeModal('tool-doc-3')"><div class="modal-content" onclick="event.stopPropagation()"><div class="modal-close" onclick="closeModal('tool-doc-3')">✕</div><div style="display:flex;align-items:center;gap:12px;margin-bottom:10px"><span style="font-size:36px">🎙️</span><div><h3 style="margin:0">讯飞智文</h3><p style="font-size:14px;color:var(--text2);margin:2px 0 0">AI 文档 · 语音转写</p></div></div><div style="font-size:14px;line-height:1.8;color:var(--text2)"><strong style="color:var(--text)">核心功能：</strong><ul style="margin-top:4px"><li>✨ 语音直接转文档</li><li>✨ AI 自动润色</li><li>✨ 多语言翻译</li><li>✨ 国产信创适配</li></ul></div><a href="https://zhiwen.xfyun.cn" target="_blank" rel="noopener" style="display:inline-block;margin-top:12px;padding:8px 20px;background:var(--gold-dim);color:var(--gold);border-radius:8px;text-decoration:none;font-size:14px;font-weight:600">🔗 打开 讯飞智文</a></div></div>
+<div class="modal-overlay" id="modal-tool-doc-4" onclick="closeModal('tool-doc-4')"><div class="modal-content" onclick="event.stopPropagation()"><div class="modal-close" onclick="closeModal('tool-doc-4')">✕</div><div style="display:flex;align-items:center;gap:12px;margin-bottom:10px"><span style="font-size:36px">🖼️</span><div><h3 style="margin:0">Napkin AI</h3><p style="font-size:14px;color:var(--text2);margin:2px 0 0">文字转可视化</p></div></div><div style="font-size:14px;line-height:1.8;color:var(--text2)"><strong style="color:var(--text)">核心功能：</strong><ul style="margin-top:4px"><li>✨ 文字自动转图表</li><li>✨ 多种视觉风格</li><li>✨ 思维导图/流程图</li><li>✨ 白板协作</li></ul></div><a href="https://napkin.ai" target="_blank" rel="noopener" style="display:inline-block;margin-top:12px;padding:8px 20px;background:var(--gold-dim);color:var(--gold);border-radius:8px;text-decoration:none;font-size:14px;font-weight:600">🔗 打开 Napkin AI</a></div></div>
+
+
+<script>
+const TOC = [
+  { id: 0, title: "封面" },
+  { id: 1, title: "开篇思考" },
+  { id: 2, title: "五个认知纠正" },
+  { id: 3, title: "三大核心能力" },
+  { id: 4, title: "理解 × 叙事" },
+  { id: 5, title: "积累能力" },
+  { id: 6, title: "AI 工具清单" },
+  { id: 7, title: "Prompt 方法论" },
+  { id: 8, title: "产品方法论库" },
+  { id: 9, title: "业务法医" },
+  { id: 10, title: "七张底牌" },
+  { id: 11, title: "现场挑战" },
+  { id: 12, title: "课后作业" },
+  { id: 13, title: "实战案例：味冠" },
+  { id: 14, title: "总结闭篇" }
+];
+
+const slides = [
+  { id: "s0", title: "封面", render: function() { return `<div class="slide-inner cover" style="text-align:center"><div class="badge-row"><span class="badge">🧠 认知升级</span><span class="badge badge-blue">🤖 AI 实践</span><span class="badge badge-purple">⚡ 判断力</span></div><h1>AI时代产品经理的</h1><h1>底牌与认知升级</h1><div class="accent-line" style="margin:20px auto"></div><p class="subtitle" style="max-width:700px;margin:0 auto">拉开差距的，不是工具，而是你的思考能力</p></div>`; } },
+  { id: "s1", title: "开篇思考", render: function() { return `<div class="slide-inner"><span class="badge">💡 开篇</span><h2>一个值得深思的问题</h2><div class="accent-line"></div><div class="grid-2" style="margin-top:16px"><div class="card" style="display:flex;flex-direction:column;justify-content:center"><div style="font-size:42px;margin-bottom:8px">🤔</div><p style="font-size:18px;line-height:1.7;color:var(--text2)">现在大家都有 AI 了。<br>写文案、做报表、出 PPT，几秒钟就能出来。</p></div><div class="card card-glow" style="display:flex;flex-direction:column;justify-content:center"><div style="font-size:42px;margin-bottom:8px">⚡</div><p style="font-size:18px;line-height:1.7;color:var(--text)"><strong>但差距依然巨大。</strong><br>不是工具用得不好，而是<br><span class="gold-text">你有没有自己的逻辑线。</span></p></div></div><div class="quote-block" style="margin-top:16px"><p>「AI 只是一个执行者。而你得做那个下命令的人。」</p></div><div style="margin-top:16px;display:flex;gap:16px;flex-wrap:wrap"><div style="flex:1;min-width:120px;background:var(--bg2);border-radius:10px;padding:14px;text-align:center;border:1px solid var(--border)"><div style="font-size:13px;color:var(--text3)">本期核心问题</div><div style="font-size:15px;color:var(--text);margin-top:4px">你的底牌是什么？</div></div><div style="flex:1;min-width:120px;background:var(--bg2);border-radius:10px;padding:14px;text-align:center;border:1px solid var(--border)"><div style="font-size:13px;color:var(--text3)">三大主线</div><div style="font-size:15px;color:var(--text);margin-top:4px">认知 → 思考 → 判断</div></div><div style="flex:1;min-width:120px;background:var(--bg2);border-radius:10px;padding:14px;text-align:center;border:1px solid var(--border)"><div style="font-size:13px;color:var(--text3)">分享主线</div><div style="font-size:15px;color:var(--text);margin-top:4px">认知纠正 → 思考能力 → 工具实践</div></div></div></div>`; } },
+  { id: "s2", title: "五个认知纠正", render: function() { return `<div class="slide-inner"><span class="badge">🧠 认知篇 · 第一部分</span><h2>必须纠正的五个认知</h2><div class="accent-line"></div><div class="grid-2" style="margin-top:12px"><div class="card cognition-card" onclick="openModal('cog-0')"><div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><span style="font-size:24px">❌</span><h4 style="margin:0">认知 1</h4></div><p style="font-size:15px;color:var(--text);font-weight:600">AI 工具 ≠ 思考能力</p><p style="font-size:13px;color:var(--text2);margin-top:4px">漂亮是加分项，<span class="gold-text">逻辑才是基本盘</span>。</p></div><div class="card cognition-card" onclick="openModal('cog-1')"><div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><span style="font-size:24px">❌</span><h4 style="margin:0">认知 2</h4></div><p style="font-size:15px;color:var(--text);font-weight:600">学 AI ≠ 学编程</p><p style="font-size:13px;color:var(--text2);margin-top:4px">把你做判断的<span class="gold-text">规则讲出来</span>。</p></div><div class="card cognition-card" onclick="openModal('cog-2')"><div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><span style="font-size:24px">❌</span><h4 style="margin:0">认知 3</h4></div><p style="font-size:15px;color:var(--text);font-weight:600">AI 产品经理才是主导者</p><p style="font-size:13px;color:var(--text2);margin-top:4px"><span class="gold-text">判断逻辑只有行业专家才有</span>。</p></div><div class="card cognition-card" onclick="openModal('cog-3')"><div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><span style="font-size:24px">❌</span><h4 style="margin:0">认知 4 & 5</h4></div><p style="font-size:15px;color:var(--text);font-weight:600">信息处理 vs 深度阅读</p><p style="font-size:13px;color:var(--text2);margin-top:4px">AI做<span class="blue-text">信息处理</span>，人类做<span class="gold-text">深度阅读</span>。</p></div></div><div style="margin-top:16px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><span class="tag tag-gold">逻辑是基本盘</span><span class="tag tag-gold">讲规则而不是写代码</span><span class="tag tag-blue">专家是造物主</span><span class="tag tag-blue">跨界整合是决胜关键</span></div></div>`; } },
+  { id: "s3", title: "三大核心能力", render: function() { return `<div class="slide-inner"><span class="badge">💪 思考篇</span><h2>拉开差距的，就三件事</h2><div class="accent-line"></div><div style="display:flex;gap:20px;margin-top:20px;flex-wrap:wrap"><div class="card ability-card" onclick="openModal('ability-0')" style="flex:1;min-width:160px;text-align:center;padding:32px 20px"><div class="big-num">01</div><h3 style="margin:8px 0 4px">理解能力</h3><p style="font-size:14px;color:var(--text2);line-height:1.6">听懂业务在做什么<br><span class="text-small">这是所有工作的天花板</span></p></div><div style="display:flex;align-items:center;font-size:28px;color:var(--text3);flex-shrink:0">→</div><div class="card ability-card" onclick="openModal('ability-1')" style="flex:1;min-width:160px;text-align:center;padding:32px 20px;border-color:rgba(245,158,11,0.3)"><div class="big-num">02</div><h3 style="margin:8px 0 4px">叙事能力</h3><p style="font-size:14px;color:var(--text2);line-height:1.6">把散乱信息串成逻辑线<br><span class="text-small">这是你的核心竞争力</span></p></div><div style="display:flex;align-items:center;font-size:28px;color:var(--text3);flex-shrink:0">→</div><div class="card ability-card" onclick="openModal('ability-2')" style="flex:1;min-width:160px;text-align:center;padding:32px 20px"><div class="big-num">03</div><h3 style="margin:8px 0 4px">积累能力</h3><p style="font-size:14px;color:var(--text2);line-height:1.6">形成你自己的认知体系<br><span class="text-small">偶尔靠灵感，长期靠积累</span></p></div></div><div style="margin-top:16px;text-align:center;padding:12px;background:var(--bg2);border-radius:10px;border:1px solid var(--border)"><span style="font-size:14px;color:var(--text3)">一条线贯穿：</span><span class="gold-text" style="font-weight:600">理解（输入）→ 叙事（加工）→ 积累（结构化沉淀）</span></div></div>`; } },
+  { id: "s4", title: "理解 × 叙事", render: function() { return `<div class="slide-inner"><span class="badge">💪 思考篇 · 深度拆解</span><h2>理解能力 × 叙事能力</h2><div class="accent-line"></div><div class="grid-2" style="margin-top:16px"><div class="card"><div style="display:flex;align-items:center;gap:10px;margin-bottom:12px"><span style="font-size:32px">🔍</span><h3 style="margin:0">理解能力</h3></div><p style="font-size:14px;color:var(--text2);line-height:1.7">你能不能真的听懂业务在做什么？</p><div style="margin-top:12px;padding:12px 16px;background:var(--bg3);border-radius:8px;font-size:13px;color:var(--text2);line-height:1.8"><span style="color:var(--gold)">PM 自问：</span><br>· 用户真正的痛点是什么？说出来的和没说出来的是什么？<br>· 业务方需求背后，真正要解决什么问题？<br>· 一堆数据里，哪个才是北极星指标？</div></div><div class="card"><div style="display:flex;align-items:center;gap:10px;margin-bottom:12px"><span style="font-size:32px">📖</span><h3 style="margin:0">叙事能力</h3></div><p style="font-size:14px;color:var(--text2);line-height:1.7">你有没有能力把散乱信息串成完整的逻辑线？</p><div style="margin-top:12px;padding:12px 16px;background:var(--bg3);border-radius:8px;font-size:13px;color:var(--text2);line-height:1.8"><span style="color:var(--gold)">PM 自问：</span><br>· PRD 能讲清楚吗？开发能一眼看懂吗？<br>· 汇报有主线吗？领导听完知道重点吗？<br>· 能把复杂问题用简单的语言讲明白吗？</div></div></div><div class="quote-block" style="margin-top:12px"><p>「理解是输入，叙事是加工。没有理解，叙事就是空中楼阁。」</p></div></div>`; } },
+  { id: "s5", title: "积累能力", render: function() { return `<div class="slide-inner"><span class="badge">💪 思考篇 · 深度拆解</span><h2>积累能力 — 体系化沉淀</h2><div class="accent-line"></div><div style="display:flex;gap:16px;margin-top:16px;flex-wrap:wrap"><div style="flex:1;min-width:140px;background:var(--bg2);border-radius:12px;padding:20px;border:1px solid var(--border);text-align:center"><div style="font-size:32px">📝</div><div style="font-weight:600;margin-top:6px">会议沉淀</div><div style="font-size:13px;color:var(--text2);margin-top:4px">决策 · 共识 · 待办</div></div><div style="flex:1;min-width:140px;background:var(--bg2);border-radius:12px;padding:20px;border:1px solid var(--border);text-align:center"><div style="font-size:32px">🕳️</div><div style="font-weight:600;margin-top:6px">踩坑清单</div><div style="font-size:13px;color:var(--text2);margin-top:4px">每个坑都是可复用的经验</div></div><div style="flex:1;min-width:140px;background:var(--bg2);border-radius:12px;padding:20px;border:1px solid var(--border);text-align:center"><div style="font-size:32px">🏗️</div><div style="font-weight:600;margin-top:6px">方法论库</div><div style="font-size:13px;color:var(--text2);margin-top:4px">行业打法 · 认知框架</div></div><div style="flex:1;min-width:140px;background:var(--bg2);border-radius:12px;padding:20px;border:1px solid var(--border);text-align:center"><div style="font-size:32px">📊</div><div style="font-weight:600;margin-top:6px">复盘资产</div><div style="font-size:13px;color:var(--text2);margin-top:4px">每次项目结束的沉淀</div></div></div><div style="margin-top:16px;padding:16px 20px;background:var(--bg2);border-radius:12px;border:1px solid var(--border);display:flex;align-items:center;gap:16px;flex-wrap:wrap"><span style="font-size:24px">🎯</span><div><div style="font-weight:600;color:var(--text)">PM 自问：</div><div style="font-size:14px;color:var(--text2)">你是否有自己的产品方法论库？你对行业的认知是碎片化的还是体系化的？</div></div></div></div>`; } },
+  { id: "s6", title: "AI 工具清单", render: function() { return `<div class="slide-inner"><span class="badge">🔧 实践篇</span><h2>AI 工具清单</h2><div class="accent-line"></div><p class="text-muted" style="margin-bottom:10px">点击工具卡片查看详情、使用场景和推荐理由</p><div class="tabs" id="tool-tabs"><button class="tab-btn active" data-tab="chat">💬 对话</button>
+<button class="tab-btn" data-tab="design">🎨 设计</button>
+<button class="tab-btn" data-tab="code">💻 编程</button>
+<button class="tab-btn" data-tab="doc">📄 文档</button>
+</div><div class="tab-content active" data-tab="chat"><div class="tool-grid"><a class="tool-card" href="javascript:void(0)" onclick="openModal('tool-chat-0')"><span class="emoji">🤖</span><div><div class="name">ChatGPT</div><div class="desc">通用对话 · 推理 · 创意</div></div><span class="ext-link">ℹ️</span></a>
+<a class="tool-card" href="javascript:void(0)" onclick="openModal('tool-chat-1')"><span class="emoji">🧠</span><div><div class="name">Claude</div><div class="desc">深度分析 · 长文 · 精准</div></div><span class="ext-link">ℹ️</span></a>
+<a class="tool-card" href="javascript:void(0)" onclick="openModal('tool-chat-2')"><span class="emoji">📚</span><div><div class="name">Kimi</div><div class="desc">超长上下文 · 文献分析</div></div><span class="ext-link">ℹ️</span></a>
+<a class="tool-card" href="javascript:void(0)" onclick="openModal('tool-chat-3')"><span class="emoji">☁️</span><div><div class="name">通义千问</div><div class="desc">国产 · 多模态 · 效率</div></div><span class="ext-link">ℹ️</span></a>
+<a class="tool-card" href="javascript:void(0)" onclick="openModal('tool-chat-4')"><span class="emoji">🔍</span><div><div class="name">DeepSeek</div><div class="desc">推理 · 代码 · 性价比</div></div><span class="ext-link">ℹ️</span></a>
+<a class="tool-card" href="javascript:void(0)" onclick="openModal('tool-chat-5')"><span class="emoji">📖</span><div><div class="name">豆包</div><div class="desc">字节系 · 创意 · 效率</div></div><span class="ext-link">ℹ️</span></a>
+</div></div><div class="tab-content" data-tab="design"><div class="tool-grid"><a class="tool-card" href="javascript:void(0)" onclick="openModal('tool-design-0')"><span class="emoji">🎨</span><div><div class="name">Midjourney</div><div class="desc">AI 绘图 · 创意视觉</div></div><span class="ext-link">ℹ️</span></a>
+<a class="tool-card" href="javascript:void(0)" onclick="openModal('tool-design-1')"><span class="emoji">✨</span><div><div class="name">即梦</div><div class="desc">国产 AI 绘图 · 剪映生态</div></div><span class="ext-link">ℹ️</span></a>
+<a class="tool-card" href="javascript:void(0)" onclick="openModal('tool-design-2')"><span class="emoji">🖌️</span><div><div class="name">Canva</div><div class="desc">AI 设计 · 一键排版</div></div><span class="ext-link">ℹ️</span></a>
+<a class="tool-card" href="javascript:void(0)" onclick="openModal('tool-design-3')"><span class="emoji">📐</span><div><div class="name">Figma AI</div><div class="desc">UI 设计 · AI 辅助</div></div><span class="ext-link">ℹ️</span></a>
+<a class="tool-card" href="javascript:void(0)" onclick="openModal('tool-design-4')"><span class="emoji">🎬</span><div><div class="name">Pika</div><div class="desc">AI 视频生成</div></div><span class="ext-link">ℹ️</span></a>
+</div></div><div class="tab-content" data-tab="code"><div class="tool-grid"><a class="tool-card" href="javascript:void(0)" onclick="openModal('tool-code-0')"><span class="emoji">⚡</span><div><div class="name">Cursor</div><div class="desc">AI 编程 IDE</div></div><span class="ext-link">ℹ️</span></a>
+<a class="tool-card" href="javascript:void(0)" onclick="openModal('tool-code-1')"><span class="emoji">👨‍💻</span><div><div class="name">GitHub Copilot</div><div class="desc">代码补全 · AI 编程</div></div><span class="ext-link">ℹ️</span></a>
+<a class="tool-card" href="javascript:void(0)" onclick="openModal('tool-code-2')"><span class="emoji">🧩</span><div><div class="name">Claude Code</div><div class="desc">CLI 编程助手</div></div><span class="ext-link">ℹ️</span></a>
+<a class="tool-card" href="javascript:void(0)" onclick="openModal('tool-code-3')"><span class="emoji">🌊</span><div><div class="name">Windsurf</div><div class="desc">AI 编程 IDE · 流式</div></div><span class="ext-link">ℹ️</span></a>
+<a class="tool-card" href="javascript:void(0)" onclick="openModal('tool-code-4')"><span class="emoji">🤖</span><div><div class="name">Cline</div><div class="desc">VSCode AI 助手</div></div><span class="ext-link">ℹ️</span></a>
+</div></div><div class="tab-content" data-tab="doc"><div class="tool-grid"><a class="tool-card" href="javascript:void(0)" onclick="openModal('tool-doc-0')"><span class="emoji">📝</span><div><div class="name">Notion AI</div><div class="desc">文档 · 知识库 · AI 写作</div></div><span class="ext-link">ℹ️</span></a>
+<a class="tool-card" href="javascript:void(0)" onclick="openModal('tool-doc-1')"><span class="emoji">✈️</span><div><div class="name">飞书智能伙伴</div><div class="desc">协作 · 会议 · AI 助手</div></div><span class="ext-link">ℹ️</span></a>
+<a class="tool-card" href="javascript:void(0)" onclick="openModal('tool-doc-2')"><span class="emoji">📊</span><div><div class="name">Gamma</div><div class="desc">AI 生成 PPT/文档</div></div><span class="ext-link">ℹ️</span></a>
+<a class="tool-card" href="javascript:void(0)" onclick="openModal('tool-doc-3')"><span class="emoji">🎙️</span><div><div class="name">讯飞智文</div><div class="desc">AI 文档 · 语音转写</div></div><span class="ext-link">ℹ️</span></a>
+<a class="tool-card" href="javascript:void(0)" onclick="openModal('tool-doc-4')"><span class="emoji">🖼️</span><div><div class="name">Napkin AI</div><div class="desc">文字转可视化</div></div><span class="ext-link">ℹ️</span></a>
+</div></div></div><p class="text-small" style="margin-top:12px;text-align:center">💡 工具在精不在多，选 1-2 个练透。点击 <span class="gold-text">ℹ️</span> 了解详情和链接</p></div>`; } },
+  { id: "s7", title: "Prompt 方法论", render: function() { return `<div class="slide-inner"><span class="badge badge-blue">🧩 实践篇</span><h2>Prompt 方法论 — 结构化提示</h2><div class="accent-line"></div><p class="text-muted" style="margin-bottom:12px">好 prompt 的核心公式：<strong style="color:var(--text)">角色 + 背景 + 任务 + 格式 + 约束</strong></p><div class="prompt-box" id="prompt-template"><button class="copy-btn" data-copy="prompt-template">📋 复制</button><span class="hl"># 角色</span>
+你是一位资深产品经理，擅长 [领域]
+
+<span class="hl"># 背景</span>
+我们正在 [项目描述]，目标是 [业务目标]
+
+<span class="hl"># 任务</span>
+请帮我 [具体要做什么]
+
+<span class="hl"># 输出格式</span>
+请按以下结构输出：
+1. [结构项1]
+2. [结构项2]
+3. [结构项3]
+
+<span class="hl"># 约束</span>
+- 输出语言：[中文/英文]
+- 字数限制：[字数]
+- 避免：[禁忌]</div><div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap"><div class="card" style="flex:1;min-width:140px;padding:14px;text-align:center"><div style="font-size:13px;color:var(--gold);font-weight:600">💡 好的 Prompt</div><div style="font-size:12px;color:var(--text2);margin-top:4px">"用MECE原则分析这个功能的用户场景"</div></div><div class="card" style="flex:1;min-width:140px;padding:14px;text-align:center;opacity:0.6"><div style="font-size:13px;color:var(--text3);font-weight:600">💤 差的 Prompt</div><div style="font-size:12px;color:var(--text3);margin-top:4px;line-height:1.7">"帮我分析一下这个功能"<br><br>❌ 没有角色<br>❌ 没有背景<br>❌ 没有约束条件<br>❌ 没有输出格式<br><br><span style="color:var(--text2)">得到的结果往往大而空</span></div></div></div></div>`; } },
+  { id: "s8", title: "产品方法论库", render: function() { return `<div class="slide-inner"><span class="badge badge-purple">📚 思考篇 · 拓展</span><h2>产品方法论库</h2><div class="accent-line"></div><p class="text-muted" style="margin-bottom:12px">点击卡片展开详情，持续积累形成你自己的方法论武器库</p><div style="display:grid;grid-template-columns:1fr 1fr;gap:12px"><div class="card methodology-card" onclick="openModal('method-0')"><h4>🔍 业务规则逆向工程</h4><p style="font-size:13px;color:var(--text2);line-height:1.7">从存量系统中反向挖掘业务规则的系统方法论。核心原则：<strong>「代码即真理，文档即谎言」</strong>。<br><br><strong>四层框架：</</p>…<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap"><span class="tag tag-gold">规则挖掘</span> <span class="tag tag-gold">边界审计</span> <span class="tag tag-gold">知识沉淀</span> </div></div><div class="card methodology-card" onclick="openModal('method-1')"><h4>🧠 第一性原理</h4><p style="font-size:13px;color:var(--text2);line-height:1.7">回归问题本质，拆解到不可分的基本元素，再重新构建思考框架。<br><br><strong>实操步骤：</strong><br>1️⃣ 明确当前方案是什么<br></p>…<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap"><span class="tag tag-purple">本质思考</span> <span class="tag tag-purple">拆解能力</span> <span class="tag tag-purple">创新</span> </div></div><div class="card methodology-card" onclick="openModal('method-2')"><h4>📖 用户故事地图</h4><p style="font-size:13px;color:var(--text2);line-height:1.7">从用户旅程出发，结构化梳理需求全景，确保不遗漏关键路径。<br><br><strong>核心要素：</strong><br>• 横向：用户旅程按时间线展开<br</p>…<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap"><span class="tag tag-blue">用户旅程</span> <span class="tag tag-blue">需求全景</span> <span class="tag tag-blue">MVP</span> </div></div><div class="card methodology-card" onclick="openModal('method-3')"><h4>📊 RICE 优先级模型</h4><p style="font-size:13px;color:var(--text2);line-height:1.7">用数据说话的优先级评估模型，替代「感觉排需求」。<br><br><strong>公式：</strong><br>RICE Score = (Reach × Im</p>…<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap"><span class="tag tag-gold">优先级</span> <span class="tag tag-gold">量化决策</span> <span class="tag tag-gold">数据驱动</span> </div></div><div class="card methodology-card" onclick="openModal('method-4')"><h4>🔄 PDCA 闭环</h4><p style="font-size:13px;color:var(--text2);line-height:1.7">Plan-Do-Check-Act，最基础也最强大的持续改进框架。<br><br><strong>AI时代的 PDCA：</strong><br>• Plan：</p>…<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap"><span class="tag tag-blue">持续改进</span> <span class="tag tag-blue">闭环思维</span> <span class="tag tag-blue">迭代</span> </div></div><div class="card methodology-card" onclick="openModal('method-5')"><h4>🎯 MECE 原则</h4><p style="font-size:13px;color:var(--text2);line-height:1.7">Mutually Exclusive, Collectively Exhaustive — 相互独立，完全穷尽。<br><br><strong>使用场景：</s</p>…<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap"><span class="tag tag-purple">结构化</span> <span class="tag tag-purple">分类</span> <span class="tag tag-purple">分析框架</span> </div></div></div></div>`; } },
+  { id: "s9", title: "业务法医", render: function() { return `<div class="slide-inner"><span class="badge badge-purple">⚖️ 判断篇</span><h2>业务法医 — 判断力的实战</h2><div class="accent-line"></div><div style="display:flex;gap:12px;margin-top:12px;flex-wrap:wrap"><div style="flex:1;min-width:180px;background:var(--bg2);padding:20px;border-radius:12px;border:1px solid var(--border)"><span class="badge" style="margin-bottom:6px">🔥 核心洞察</span><p style="font-size:14px;color:var(--text2);line-height:1.7">存量系统复杂、文档缺失、人员断层 — 知识在不断丢失。<br><br><span class="gold-text">真正理解业务的人，能从代码和数据中还原真实规则。</span></p></div><div style="flex:1;min-width:180px;background:var(--bg2);padding:20px;border-radius:12px;border:1px solid var(--border)"><span class="badge badge-blue" style="margin-bottom:6px">🏗️ 四大层次</span><div style="font-size:13px;color:var(--text2);line-height:2">1. 业务事实层 — 数据库·字段·状态机<br>2. 业务模型层 — 约束·权限·流程<br>3. 规则挖掘层 — 考古·审计·可视化<br>4. 资产沉淀层 — 可复用规则库</div></div></div><div style="margin-top:12px;display:flex;gap:12px;flex-wrap:wrap"><div style="flex:1;min-width:140px;padding:12px;background:var(--bg2);border-radius:10px;border:1px solid var(--border);text-align:center"><div style="font-size:12px;color:var(--text3)">法医式指令</div><div style="font-size:13px;color:var(--text);margin-top:2px">"找出不可逆字段"</div></div><div style="flex:1;min-width:140px;padding:12px;background:var(--bg2);border-radius:10px;border:1px solid var(--border);text-align:center"><div style="font-size:12px;color:var(--text3)">边界审计</div><div style="font-size:13px;color:var(--text);margin-top:2px">"触发边界条件"</div></div><div style="flex:1;min-width:140px;padding:12px;background:var(--bg2);border-radius:10px;border:1px solid var(--border);text-align:center"><div style="font-size:12px;color:var(--text3)">规则考古</div><div style="font-size:13px;color:var(--text);margin-top:2px">"运营事故 → 规则补全"</div></div></div><p class="text-small" style="margin-top:12px;text-align:center"><span class="gold-text">⛏️</span> 进阶路径：PM → 业务法医 → 规则架构师</p></div>`; } },
+  { id: "s10", title: "七张底牌", render: function() { return `<div class="slide-inner"><span class="badge">🛡️ 认知升级</span><h2>AI 拿不走的七张底牌</h2><div class="accent-line"></div><div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-top:16px"><div class="card" style="text-align:center;padding:18px 12px"><div style="font-size:32px">🤗</div><h4 style="margin:4px 0">共情</h4><p style="font-size:12px;color:var(--text2)">理解用户的真实感受</p></div><div class="card" style="text-align:center;padding:18px 12px"><div style="font-size:32px">🎭</div><h4 style="margin:4px 0">审美</h4><p style="font-size:12px;color:var(--text2)">判断什么才是好的体验</p></div><div class="card" style="text-align:center;padding:18px 12px"><div style="font-size:32px">🎯</div><h4 style="margin:4px 0">赋予意义</h4><p style="font-size:12px;color:var(--text2)">让产品有灵魂</p></div><div class="card" style="text-align:center;padding:18px 12px"><div style="font-size:32px">⚔️</div><h4 style="margin:4px 0">批判</h4><p style="font-size:12px;color:var(--text2)">敢于质疑和推翻</p></div><div class="card" style="text-align:center;padding:18px 12px"><div style="font-size:32px">✨</div><h4 style="margin:4px 0">创造</h4><p style="font-size:12px;color:var(--text2)">从 0 到 1 的想象力</p></div><div class="card" style="text-align:center;padding:18px 12px"><div style="font-size:32px">🦅</div><h4 style="margin:4px 0">突破框架</h4><p style="font-size:12px;color:var(--text2)">跳出既有规则思考</p></div><div class="card card-glow" style="text-align:center;padding:18px 12px"><div style="font-size:32px">❤️</div><h4 style="margin:4px 0">有温度的抉择</h4><p style="font-size:12px;color:var(--text2)">在复杂世界里做出选择</p></div></div><div class="quote-block" style="margin-top:12px"><p>「与其害怕被 AI 替代，不如握紧这些底牌。<br>未来不属于最会用工具的人，而属于最会思考的人。」</p></div></div>`; } },
+  { id: "s11", title: "现场挑战", render: function() { return `<div class="slide-inner"><span class="badge">🎮 互动环节</span><h2>现场挑战 — 测测你的判断力</h2><div class="accent-line"></div><p class="text-muted" style="margin-bottom:12px">点击卡片揭晓场景，思考 30 秒后展开讨论👇</p><div class="challenge-grid" id="challenge-grid"><div class="challenge-card" data-revealed="false" onclick="revealChallenge(this)"><div class="front"><div style="font-size:36px">📋</div><div style="font-weight:600;margin-top:8px">挑战 A</div><div style="font-size:12px;color:var(--text3);margin-top:4px">PRD 之痛</div><div class="click-hint">👆 点击揭晓</div></div><div class="back"><div style="font-weight:600;color:var(--gold);margin-bottom:6px">PRD 之痛</div><div style="font-size:13px;line-height:1.7"><strong style="color:var(--gold)">场景：</strong>开发说 PRD 看不懂，你改了三版他还说有歧义。<br><br><strong style="color:var(--text)">讨论方向：</strong><br>• 你的第一反应是加更多细节，还是换叙事方式？<br>• 判断：「写清楚」和「写得对」哪个更难？<br>• 如果是你，会用 AI 怎么优化 PRD？<br><br><strong style="color:var(--blue)">思考框架：</strong>用户故事地图 → 验收标准 → 原型标注 → 术语统一</div></div></div><div class="challenge-card" data-revealed="false" onclick="revealChallenge(this)"><div class="front"><div style="font-size:36px">📊</div><div style="font-weight:600;margin-top:8px">挑战 B</div><div style="font-size:12px;color:var(--text3);margin-top:4px">数据怎么说</div><div class="click-hint">👆 点击揭晓</div></div><div class="back"><div style="font-weight:600;color:var(--gold);margin-bottom:6px">数据怎么说</div><div style="font-size:13px;line-height:1.7"><strong style="color:var(--gold)">场景：</strong>同时拿到两份数据报告，结论完全相反。<br><br><strong style="color:var(--text)">讨论方向：</strong><br>• 你信哪个？判断依据是什么？<br>• 数据的口径真的对齐了吗？（用户数、时间窗口、计算规则）<br>• 用 AI 辅助核查，你会怎么问？<br><br><strong style="color:var(--blue)">思考框架：</strong>溯源口径 → 对比样本 → 交叉验证 → 追问异常</div></div></div><div class="challenge-card" data-revealed="false" onclick="revealChallenge(this)"><div class="front"><div style="font-size:36px">🧩</div><div style="font-weight:600;margin-top:8px">挑战 C</div><div style="font-size:12px;color:var(--text3);margin-top:4px">AI 提效规划</div><div class="click-hint">👆 点击揭晓</div></div><div class="back"><div style="font-weight:600;color:var(--gold);margin-bottom:6px">AI 提效规划</div><div style="font-size:13px;line-height:1.7"><strong style="color:var(--gold)">场景：</strong>老板让你用 AI 提效团队工作流程。<br><br><strong style="color:var(--text)">讨论方向：</strong><br>• 先搭工具？先梳理流程？还是先看团队痛点？<br>• 如何判断哪些环节真的值得用 AI？<br>• 怎么衡量提效效果？<br><br><strong style="color:var(--blue)">思考框架：</strong>痛点排序 → 流程拆解 → ROI 评估 → 试点验证</div></div></div></div><p class="text-small" style="margin-top:12px;text-align:center">💡 关键不在于答案，而在于 <span class="gold-text">你的思考路径</span></p></div>`; } },
+  { id: "s12", title: "课后作业", render: function() { return `<div class="slide-inner"><span class="badge">📌 课后作业</span><h2>行动清单 — 从知道到做到</h2><div class="accent-line"></div><ul class="checklist" id="homework-checklist"><li><span class="check">✓</span><span class="label"><strong>作业 1</strong> — 选一个你工作中最常用的 AI 指令，用「角色+背景+任务+格式+约束」重写一遍，对比两次输出的差异</span></li>
+<li><span class="check">✓</span><span class="label"><strong>作业 2</strong> — 找一个你业务中"看似不合理"的规则或流程，追问为什么存在，写成一段简短复盘</span></li>
+</ul></div>`; } },
+  { id: "s13", title: "实战案例：味冠", render: function() { return `<div class="slide-inner"><span class="badge">📖 实战案例</span><h2>个人实战 — 味冠食品 × AI 经营智能体</h2><div class="accent-line"></div><div style="margin-top:12px;display:flex;gap:12px;flex-wrap:wrap"><div style="flex:1;min-width:200px;background:var(--bg2);padding:16px;border-radius:12px;border:1px solid var(--border)"><span class="badge" style="margin-bottom:4px">📌 背景</span><p style="font-size:13px;color:var(--text2);line-height:1.6">味冠食品是一家商贸流通企业，主营调味品/食材的进销存业务。库存积压和缺货长期并存，采购靠经验、财务月底对账慢、老板看数据靠人工导表。</p></div><div style="flex:1;min-width:200px;background:var(--bg2);padding:16px;border-radius:12px;border:1px solid var(--border)"><span class="badge badge-blue" style="margin-bottom:4px">⚠️ 问题</span><p style="font-size:13px;color:var(--text2);line-height:1.6">· 缺货影响客户满意度，滞销占用资金<br>· 采购数量凭经验，没有数据支撑<br>· 进销存系统只是"记账工具"，没有经营分析能力<br>· 管理层想看到的数据，需要人工整理 T+1 才能出</p></div></div><div style="margin-top:12px;display:flex;gap:12px;flex-wrap:wrap"><div style="flex:2;min-width:260px;background:var(--bg2);padding:16px;border-radius:12px;border:1px solid var(--border)"><span class="badge badge-purple" style="margin-bottom:4px">⚡ 行动</span><p style="font-size:13px;color:var(--text2);line-height:1.7"><strong>搭建「智慧经营智能体平台」</strong><br><br><strong>1️⃣ 智能采购助手</strong> — 自动扫描库存+销量，识别缺货/滞销风险，计算补货量，按角色推送<br><br><strong>2️⃣ 智能库存管家</strong> — 追踪库存周转率，高库存低动销自动预警，判断滞销风险和资金占用金额<br><br><strong>3️⃣ 财务智能参谋</strong> — 分析商品/客户/品类毛利变化，识别成本异常、售价异常、应收逾期<br><br><strong>4️⃣ 多模态智能开单</strong> — 开单时自动提示客户历史、库存可售、历史成交价、毛利情况</p></div></div><div style="margin-top:12px;display:flex;gap:12px;flex-wrap:wrap"><div style="flex:1;min-width:180px;background:var(--bg2);padding:16px;border-radius:12px;border:1px solid var(--border)"><span class="badge" style="margin-bottom:4px">✅ 结果</span><p style="font-size:13px;color:var(--text2);line-height:1.6">· 补货建议从"凭经验"变为"数据决策"<br>· 缺货发现从 T+1 缩短到实时<br>· 库存周转率显著改善<br>· 管理层可以自然语言问数据</p></div><div style="flex:1;min-width:180px;background:var(--bg2);padding:16px;border-radius:12px;border:1px solid var(--border)"><span class="badge badge-blue" style="margin-bottom:4px">💭 反思</span><p style="font-size:13px;color:var(--text2);line-height:1.6">· AI 做好发现和推送，但最终决策必须由人确认<br>· 最大的坑：数据口径不统一，先花了 2 周对齐定义<br>· 核心原则：智能体负责串联、跟踪、复盘，但不替人做决定<br>· <span class="gold-text">「代码即真理，文档即谎言」</span></p></div></div><div style="margin-top:12px;display:flex;gap:6px;justify-content:center;flex-wrap:wrap"><span class="tag tag-gold">AI+进销存</span><span class="tag tag-blue">业务规则逆向工程</span><span class="tag tag-gold">五大智能体</span><span class="tag tag-blue">角色协同闭环</span></div></div>`; } },
+  { id: "s14", title: "总结闭篇", render: function() { return `<div class="slide-inner closing" style="text-align:center"><span class="badge" style="margin-bottom:20px">🎯 总结</span><h1>别让自己的脑子生锈</h1><div class="accent-line" style="margin:16px auto"></div><div class="tagline" style="max-width:700px;margin:0 auto">AI 可以替代重复，但替代不了经历。<br>可以处理信息，但处理不了感受。<br>可以精通垂直领域，但难以打破边界去整合。</div><div style="margin-top:32px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap"><div style="padding:14px 24px;background:var(--bg2);border-radius:12px;border:1px solid var(--border)"><div style="font-size:14px;color:var(--text3)">做</div><div style="font-size:18px;color:var(--text);font-weight:600">有温度</div></div><div style="padding:14px 24px;background:var(--bg2);border-radius:12px;border:1px solid var(--border)"><div style="font-size:14px;color:var(--text3)">做</div><div style="font-size:18px;color:var(--text);font-weight:600">有广度</div></div><div style="padding:14px 24px;background:var(--bg2);border-radius:12px;border:1px solid var(--border)"><div style="font-size:14px;color:var(--text3)">做</div><div style="font-size:18px;color:var(--text);font-weight:600">有深度</div></div></div><div style="margin-top:32px;font-size:15px;color:var(--text2);line-height:2">的产品经理<br><span style="color:var(--gold);font-weight:600;font-size:18px">才是对抗 AI 时代不确定性的终极底气</span></div><div style="margin-top:32px;padding:16px;background:var(--bg2);border-radius:12px;border:1px solid var(--border);display:inline-block"><span style="font-size:14px;color:var(--text3)">谢谢大家 · 欢迎讨论 🙌</span></div></div>`; } }
+];
+
+let current = 0;
+const total = slides.length;
+
+const container = document.getElementById('slides');
+const dots = document.getElementById('dots');
+const prevBtn = document.getElementById('prev-btn');
+const nextBtn = document.getElementById('next-btn');
+const slideNum = document.getElementById('slide-num');
+const slideTotal = document.getElementById('slide-total');
+const progressFill = document.getElementById('progress-fill');
+const sidebarList = document.getElementById('sidebar-list');
+
+slideTotal.textContent = '/ ' + total;
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebar-mask').classList.toggle('show');
+}
+
+function renderSidebar() {
+  sidebarList.innerHTML = '';
+  TOC.forEach(function(item, i) {
+    var div = document.createElement('div');
+    div.className = 'sidebar-item' + (i === current ? ' active' : '');
+    div.innerHTML = '<span class="num">' + (i+1) + '</span>' + item.title;
+    div.addEventListener('click', function() { goTo(i); toggleSidebar(); });
+    sidebarList.appendChild(div);
+  });
+}
+
+function updateSidebar() {
+  document.querySelectorAll('.sidebar-item').forEach(function(el, i) {
+    if (i === current) el.classList.add('active');
+    else el.classList.remove('active');
+  });
+}
+
+function renderSlide(index) {
+  container.innerHTML = '';
+  slides.forEach(function(s, i) {
+    var div = document.createElement('div');
+    div.className = 'slide';
+    if (i === index) div.classList.add('active');
+    else if (i === index - 1) div.classList.add('prev');
+    div.innerHTML = s.render();
+    container.appendChild(div);
+  });
+
+  dots.innerHTML = '';
+  for (var i = 0; i < total; i++) {
+    var dot = document.createElement('span');
+    if (i === current) dot.classList.add('active');
+    dot.addEventListener('click', (function(idx) { return function() { goTo(idx); }; })(i));
+    dots.appendChild(dot);
+  }
+
+  slideNum.textContent = '' + (current + 1);
+  prevBtn.disabled = current === 0;
+  nextBtn.disabled = current === total - 1;
+  progressFill.style.width = ((current + 1) / total * 100) + '%';
+
+  renderSidebar();
+  updateSidebar();
+  bindInteractions();
+}
+
+function goTo(index) {
+  if (index < 0 || index >= total || index === current) return;
+  current = index;
+  renderSlide(current);
+}
+
+function nextSlide() { goTo(current + 1); }
+function prevSlide() { goTo(current - 1); }
+
+function bindInteractions() {
+  document.querySelectorAll('.tab-btn').forEach(function(btn) {
+    btn.removeEventListener('click', handleTabClick);
+    btn.addEventListener('click', handleTabClick);
+  });
+  document.querySelectorAll('.copy-btn').forEach(function(btn) {
+    btn.removeEventListener('click', handleCopy);
+    btn.addEventListener('click', handleCopy);
+  });
+  document.querySelectorAll('.checklist li').forEach(function(item) {
+    item.removeEventListener('click', handleCheck);
+    item.addEventListener('click', handleCheck);
+  });
+}
+
+function handleTabClick(e) {
+  var btn = e.currentTarget;
+  var tab = btn.dataset.tab;
+  var inner = btn.closest('.slide-inner');
+  inner.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+  inner.querySelectorAll('.tab-content').forEach(function(c) { c.classList.remove('active'); });
+  var target = inner.querySelector('.tab-content[data-tab="' + tab + '"]');
+  if (target) target.classList.add('active');
+}
+
+function handleCopy(e) {
+  var btn = e.currentTarget;
+  var templateId = btn.dataset.copy;
+  var template = document.getElementById(templateId);
+  if (!template) return;
+  var text = template.textContent.replace('\u{1F4CB} 复制', '').trim();
+  navigator.clipboard.writeText(text).then(function() {
+    btn.textContent = '✅ 已复制';
+    btn.classList.add('copied');
+    setTimeout(function() { btn.textContent = '\u{1F4CB} 复制'; btn.classList.remove('copied'); }, 2000);
+  }).catch(function() {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    btn.textContent = '✅ 已复制';
+    btn.classList.add('copied');
+    setTimeout(function() { btn.textContent = '\u{1F4CB} 复制'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+function handleCheck(e) {
+  e.currentTarget.classList.toggle('checked');
+}
+
+function openModal(id) {
+  var el = document.getElementById('modal-' + id);
+  if (el) el.classList.add('show');
+}
+
+function closeModal(id) {
+  var el = document.getElementById('modal-' + id);
+  if (el) el.classList.remove('show');
+}
+
+function revealChallenge(card) {
+  if (card.dataset.revealed !== 'true') {
+    card.dataset.revealed = 'true';
+    card.classList.add('revealed');
+  }
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); nextSlide(); }
+  if (e.key === 'ArrowLeft') { e.preventDefault(); prevSlide(); }
+  if (e.key === 'Home') { e.preventDefault(); goTo(0); }
+  if (e.key === 'End') { e.preventDefault(); goTo(total - 1); }
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.modal-overlay.show').forEach(function(m) { m.classList.remove('show'); });
+    if (document.getElementById('sidebar').classList.contains('open')) toggleSidebar();
+  }
+  if (e.key === 'r' || e.key === 'R') {
+    document.querySelectorAll('.checklist li').forEach(function(li) { li.classList.remove('checked'); });
+    document.querySelectorAll('.challenge-card').forEach(function(card) {
+      card.dataset.revealed = 'false';
+      card.classList.remove('revealed');
+    });
+  }
+});
+
+// Slide click delegation - ignore clicks on interactive elements
+document.getElementById('slides').addEventListener('click', function(e) {
+  var target = e.target.closest('.tab-btn, .tool-card, .challenge-card, .checklist li, .copy-btn, .cognition-card, .ability-card, .methodology-card, .modal-overlay, .modal-content, .modal-close, a, button, .slide-inner a, .slide-inner button');
+  if (target) return;
+  var rect = this.getBoundingClientRect();
+  var x = e.clientX - rect.left;
+  if (x < rect.width * 0.3) prevSlide();
+  else if (x > rect.width * 0.7) nextSlide();
+});
+
+document.getElementById('prev-btn').addEventListener('click', prevSlide);
+document.getElementById('next-btn').addEventListener('click', nextSlide);
+
+var touchStartX = 0;
+document.addEventListener('touchstart', function(e) { touchStartX = e.changedTouches[0].screenX; }, { passive: true });
+document.addEventListener('touchend', function(e) {
+  var diff = touchStartX - e.changedTouches[0].screenX;
+  if (Math.abs(diff) > 50) { if (diff > 0) nextSlide(); else prevSlide(); }
+}, { passive: true });
+
+document.querySelectorAll('.modal-overlay').forEach(function(m) {
+  m.addEventListener('click', function() { this.classList.remove('show'); });
+});
+
+renderSlide(0);
+</script>
+</body>
+</html>
