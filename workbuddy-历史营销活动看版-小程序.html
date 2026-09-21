@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>历史营销活动展板 · 小程序版</title>
+<style>
+  :root {
+    --wx-green: #07c160;
+    --wx-green-dark: #06ad56;
+    --wx-bg: #ededed;
+    --wx-card: #ffffff;
+    --wx-text: #111111;
+    --wx-text-2: #666666;
+    --wx-text-3: #999999;
+    --wx-border: #f0f0f0;
+    --wx-danger: #fa5151;
+    --wx-orange: #fa9d3b;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', 'Microsoft YaHei', sans-serif;
+    background: linear-gradient(135deg, #2b2b33 0%, #3a3a45 50%, #2b2b33 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 0;
+  }
+
+  /* ===== Phone Frame ===== */
+  .phone-frame {
+    width: 390px;
+    height: 844px;
+    background: #000;
+    border-radius: 48px;
+    padding: 10px;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.5), inset 0 0 0 2px #1a1a1a;
+    position: relative;
+    flex-shrink: 0;
+  }
+  .phone-screen {
+    width: 100%;
+    height: 100%;
+    border-radius: 38px;
+    background: var(--wx-bg);
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+  .notch {
+    position: absolute;
+    top: 8px; left: 50%;
+    transform: translateX(-50%);
+    width: 110px; height: 22px;
+    background: #000;
+    border-radius: 12px;
+    z-index: 60;
+  }
+
+  /* ===== Status Bar ===== */
+  .status-bar {
+    height: 44px;
+    background: #fff;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    padding: 0 26px 6px 28px;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 55;
+  }
+  .status-bar .time { font-size: 14px; font-weight: 700; letter-spacing: 0.5px; }
+  .status-bar .icons { display: flex; align-items: center; gap: 5px; font-size: 12px; }
+
+  /* ===== Nav Bar ===== */
+  .nav-bar {
+    height: 48px;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    flex-shrink: 0;
+    border-bottom: 0.5px solid rgba(0,0,0,0.04);
+  }
+  .nav-title { font-size: 17px; font-weight: 600; color: var(--wx-text); }
+  .capsule {
+    position: absolute;
+    right: 12px; top: 50%;
+    transform: translateY(-50%);
+    width: 86px; height: 32px;
+    border-radius: 16px;
+    background: rgba(0,0,0,0.06);
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    z-index: 5;
+  }
+  .capsule .more { font-size: 18px; font-weight: 800; color: var(--wx-text); letter-spacing: 1px; line-height: 1; }
+  .capsule .sep { width: 1px; height: 18px; background: rgba(0,0,0,0.12); }
+  .capsule .circle {
+    width: 14px; height: 14px;
+    border: 1.5px solid var(--wx-text);
+    border-radius: 50%;
+    position: relative;
+    opacity: 0.9;
+  }
+  .capsule .circle::after {
+    content: '';
+    position: absolute;
+    right: -4px; top: 3px;
+    width: 5px; height: 5px;
+    border-top: 1.5px solid var(--wx-text);
+    border-right: 1.5px solid var(--wx-text);
+    transform: rotate(45deg);
+  }
+
+  /* ===== Page Area ===== */
+  .page-area {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    position: relative;
+  }
+  .page-area::-webkit-scrollbar { display: none; }
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ===== Home Page ===== */
+  .home-banner {
+    margin: 12px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #07c160 0%, #06ad56 45%, #0a9e5c 100%);
+    color: #fff;
+    padding: 20px 18px;
+    position: relative;
+    overflow: hidden;
+  }
+  .home-banner::after {
+    content: '';
+    position: absolute;
+    right: -30px; top: -40px;
+    width: 140px; height: 140px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.12);
+  }
+  .home-banner::before {
+    content: '';
+    position: absolute;
+    right: 20px; bottom: -50px;
+    width: 110px; height: 110px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.08);
+  }
+  .banner-title { font-size: 18px; font-weight: 700; letter-spacing: 0.5px; }
+  .banner-sub { font-size: 12px; opacity: 0.85; margin-top: 4px; }
+  .banner-stats {
+    display: flex;
+    gap: 0;
+    margin-top: 18px;
+    position: relative; z-index: 1;
+  }
+  .banner-stat { flex: 1; }
+  .banner-stat .num { font-size: 20px; font-weight: 700; }
+  .banner-stat .label { font-size: 11px; opacity: 0.8; margin-top: 2px; }
+  .banner-stat + .banner-stat { border-left: 1px solid rgba(255,255,255,0.25); padding-left: 14px; }
+
+  /* Category Grid */
+  .section {
+    background: var(--wx-card);
+    margin: 12px;
+    border-radius: 16px;
+    padding: 14px;
+  }
+  .section-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--wx-text);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .section-title .more { font-size: 12px; color: var(--wx-text-3); font-weight: 400; }
+  .cat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px 8px;
+  }
+  .cat-item { text-align: center; cursor: pointer; }
+  .cat-icon {
+    width: 44px; height: 44px;
+    border-radius: 14px;
+    margin: 0 auto 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+  }
+  .cat-item .name { font-size: 12px; color: var(--wx-text-2); }
+
+  /* Ongoing / List cards */
+  .mini-list { display: flex; flex-direction: column; gap: 10px; }
+
+  .camp-card {
+    background: var(--wx-card);
+    margin: 0 12px 10px;
+    border-radius: 14px;
+    padding: 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: transform 0.15s;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+  }
+  .camp-card:active { transform: scale(0.98); background: #fafafa; }
+  .type-icon {
+    width: 46px; height: 46px;
+    border-radius: 12px;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+  }
+  .camp-main { flex: 1; min-width: 0; }
+  .camp-name {
+    font-size: 14.5px;
+    font-weight: 600;
+    color: var(--wx-text);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .status-tag {
+    flex-shrink: 0;
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-weight: 500;
+  }
+  .status-tag.done { background: #e8f8ef; color: var(--wx-green); }
+  .status-tag.ongoing { background: #fef3e7; color: var(--wx-orange); }
+  .status-tag.planned { background: #f2f2f2; color: var(--wx-text-3); }
+  .camp-meta { font-size: 11px; color: var(--wx-text-3); margin-top: 3px; }
+  .camp-metrics {
+    display: flex;
+    gap: 12px;
+    margin-top: 6px;
+    font-size: 11px;
+    color: var(--wx-text-3);
+  }
+  .camp-metrics b { color: var(--wx-text); font-weight: 600; margin-left: 2px; }
+  .camp-metrics .roi b { color: var(--wx-green); }
+  .camp-arrow { color: #c8c8c8; font-size: 20px; flex-shrink: 0; }
+
+  /* ===== Campaigns Page ===== */
+  .search-box {
+    margin: 12px 12px 0;
+    background: #f2f2f2;
+    border-radius: 10px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    gap: 6px;
+  }
+  .search-box svg { flex-shrink: 0; }
+  .search-box input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    outline: none;
+    font-size: 14px;
+    color: var(--wx-text);
+  }
+  .search-box input::placeholder { color: var(--wx-text-3); }
+  .chips-scroll {
+    display: flex;
+    gap: 8px;
+    padding: 10px 12px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .chips-scroll::-webkit-scrollbar { display: none; }
+  .chip {
+    flex-shrink: 0;
+    padding: 5px 14px;
+    border-radius: 16px;
+    background: #f2f2f2;
+    font-size: 13px;
+    color: var(--wx-text-2);
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .chip.active { background: var(--wx-green); color: #fff; font-weight: 500; }
+  .camp-list-wrap { padding-bottom: 8px; }
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--wx-text-3);
+    font-size: 14px;
+  }
+  .empty-state .e-icon { font-size: 44px; margin-bottom: 10px; }
+
+  /* ===== Data Page ===== */
+  .data-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin: 12px;
+  }
+  .data-card {
+    background: var(--wx-card);
+    border-radius: 14px;
+    padding: 14px;
+    text-align: center;
+  }
+  .data-card .d-value { font-size: 20px; font-weight: 700; color: var(--wx-text); }
+  .data-card .d-value.green { color: var(--wx-green); }
+  .data-card .d-label { font-size: 11px; color: var(--wx-text-3); margin-top: 3px; }
+  .chart-card {
+    background: var(--wx-card);
+    margin: 0 12px 12px;
+    border-radius: 14px;
+    padding: 14px;
+  }
+  .bar-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+    height: 130px;
+    padding-top: 8px;
+  }
+  .bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; }
+  .bar {
+    width: 100%;
+    max-width: 16px;
+    border-radius: 4px 4px 2px 2px;
+    background: linear-gradient(180deg, #07c160, #06ad56);
+    min-height: 3px;
+    transition: height 0.5s;
+  }
+  .bar-col .b-label { font-size: 9px; color: var(--wx-text-3); margin-top: 6px; }
+  .dist-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .dist-row:last-child { margin-bottom: 0; }
+  .dist-name { font-size: 12px; color: var(--wx-text-2); width: 34px; flex-shrink: 0; }
+  .dist-bar {
+    flex: 1;
+    height: 8px;
+    background: #f2f2f2;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .dist-fill { height: 100%; border-radius: 4px; }
+  .dist-num { font-size: 12px; color: var(--wx-text-2); width: 30px; text-align: right; flex-shrink: 0; }
+
+  /* ===== Mine Page ===== */
+  .mine-header {
+    margin: 12px;
+    background: var(--wx-card);
+    border-radius: 16px;
+    padding: 20px 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .avatar {
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #07c160, #0a9e5c);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px;
+    color: #fff;
+    flex-shrink: 0;
+  }
+  .mine-name { font-size: 17px; font-weight: 600; }
+  .mine-sub { font-size: 12px; color: var(--wx-text-3); margin-top: 3px; }
+  .menu-group {
+    background: var(--wx-card);
+    margin: 0 12px 12px;
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  .menu-item {
+    display: flex;
+    align-items: center;
+    padding: 14px 16px;
+    font-size: 14px;
+    color: var(--wx-text);
+    cursor: pointer;
+    position: relative;
+    gap: 10px;
+  }
+  .menu-item + .menu-item::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 16px; right: 0;
+    height: 0.5px;
+    background: var(--wx-border);
+  }
+  .menu-item .m-icon { font-size: 18px; }
+  .menu-item .m-arrow { margin-left: auto; color: #c8c8c8; font-size: 16px; }
+
+  /* ===== TabBar ===== */
+  .tabbar {
+    height: 56px;
+    background: #fff;
+    border-top: 0.5px solid rgba(0,0,0,0.06);
+    display: flex;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 50;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .tab-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    cursor: pointer;
+    color: #a0a0a0;
+    font-size: 10px;
+  }
+  .tab-item svg { width: 24px; height: 24px; }
+  .tab-item.active { color: var(--wx-green); }
+  .tab-item.active svg { color: var(--wx-green); }
+
+  /* ===== Detail Page ===== */
+  .detail-page {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: var(--wx-bg);
+    z-index: 100;
+    transform: translateX(100%);
+    transition: transform 0.3s cubic-bezier(0.3, 0.9, 0.3, 1);
+    display: flex;
+    flex-direction: column;
+  }
+  .detail-page.open { transform: translateX(0); }
+  .detail-nav {
+    height: 48px;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    position: relative;
+    flex-shrink: 0;
+  }
+  .back-btn {
+    width: 34px; height: 34px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    border-radius: 8px;
+  }
+  .back-btn:active { background: #f2f2f2; }
+  .detail-nav .d-title {
+    position: absolute;
+    left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 16px; font-weight: 600;
+    max-width: 180px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .detail-body {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 30px;
+  }
+  .detail-body::-webkit-scrollbar { display: none; }
+  .detail-banner {
+    margin: 12px;
+    border-radius: 16px;
+    padding: 18px 16px;
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+  }
+  .detail-banner h2 { font-size: 18px; font-weight: 700; padding-right: 30px; }
+  .detail-banner .sub { font-size: 12px; opacity: 0.85; margin-top: 6px; }
+  .d-metrics {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin: 0 12px 12px;
+  }
+  .d-metric {
+    background: var(--wx-card);
+    border-radius: 14px;
+    padding: 14px;
+    text-align: center;
+  }
+  .d-metric .v { font-size: 20px; font-weight: 700; }
+  .d-metric .l { font-size: 11px; color: var(--wx-text-3); margin-top: 3px; }
+  .d-section {
+    background: var(--wx-card);
+    margin: 0 12px 12px;
+    border-radius: 14px;
+    padding: 14px 16px;
+  }
+  .d-section h4 {
+    font-size: 14px; font-weight: 600;
+    margin-bottom: 10px;
+    color: var(--wx-text);
+  }
+  .d-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 7px 0;
+    font-size: 13px;
+    border-bottom: 0.5px solid var(--wx-border);
+  }
+  .d-row:last-child { border-bottom: none; }
+  .d-row .k { color: var(--wx-text-3); }
+  .d-row .v { color: var(--wx-text); font-weight: 500; }
+  .d-desc { font-size: 13.5px; line-height: 1.8; color: var(--wx-text-2); }
+  .d-takeaway {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    padding: 7px 0;
+    font-size: 13.5px;
+    color: var(--wx-text);
+  }
+  .d-takeaway .tk { color: var(--wx-green); font-weight: 700; flex-shrink: 0; }
+
+  /* type colors */
+  .t-促销 { background: #fdeeee; }
+  .t-品牌 { background: #f3efff; }
+  .t-节日 { background: #fef5e7; }
+  .t-社群 { background: #e8f8ef; }
+  .t-内容 { background: #e8f6fe; }
+  .t-跨界 { background: #f6ecff; }
+  .banner-促销 { background: linear-gradient(135deg, #fa5151, #e64340); }
+  .banner-品牌 { background: linear-gradient(135deg, #7c4dff, #5b3fd4); }
+  .banner-节日 { background: linear-gradient(135deg, #fa9d3b, #f08300); }
+  .banner-社群 { background: linear-gradient(135deg, #07c160, #06ad56); }
+  .banner-内容 { background: linear-gradient(135deg, #2f9dff, #1d7fe0); }
+  .banner-跨界 { background: linear-gradient(135deg, #a855f7, #8b3df5); }
+
+  /* ===== Mobile Full Screen ===== */
+  @media (max-width: 480px) {
+    body { padding: 0; background: var(--wx-bg); display: block; }
+    .phone-frame { width: 100%; height: 100vh; height: 100dvh; border-radius: 0; padding: 0; box-shadow: none; }
+    .phone-screen { border-radius: 0; }
+    .notch { display: none; }
+    .status-bar { height: 40px; padding-top: 10px; align-items: center; }
+  }
+</style>
+</head>
+<body>
+
+<div class="phone-frame">
+  <div class="phone-screen">
+    <div class="notch"></div>
+
+    <!-- Status Bar -->
+    <div class="status-bar">
+      <span class="time">9:41</span>
+      <span class="icons">
+        <svg width="17" height="11" viewBox="0 0 17 11" fill="none"><rect x="0.5" y="7" width="3" height="3.5" rx="0.8" fill="#111"/><rect x="4.5" y="5" width="3" height="5.5" rx="0.8" fill="#111"/><rect x="8.5" y="2.5" width="3" height="8" rx="0.8" fill="#111"/><rect x="12.5" y="0" width="3" height="10.5" rx="0.8" fill="#111"/></svg>
+        <svg width="16" height="12" viewBox="0 0 16 12" fill="none"><path d="M8 10.2a1.6 1.6 0 1 0 0 .01M2.5 4.5a8.5 8.5 0 0 1 11 0M0.8 2a11.5 11.5 0 0 1 14.4 0M5.3 7a5.2 5.2 0 0 1 5.4 0" stroke="#111" stroke-width="1.4" stroke-linecap="round"/></svg>
+        <svg width="25" height="12" viewBox="0 0 25 12" fill="none"><rect x="0.5" y="0.5" width="21" height="11" rx="3" stroke="#111" stroke-opacity="0.4"/><rect x="2" y="2" width="15" height="8" rx="1.6" fill="#111"/><rect x="23" y="4" width="2" height="4" rx="1" fill="#111" fill-opacity="0.4"/></svg>
+      </span>
+    </div>
+
+    <!-- Nav Bar -->
+    <div class="nav-bar">
+      <div class="nav-title" id="navTitle">营销活动</div>
+      <div class="capsule">
+        <span class="more">···</span>
+        <span class="sep"></span>
+        <span class="circle"></span>
+      </div>
+    </div>
+
+    <!-- Pages -->
+    <div class="page-area">
+
+      <!-- ===== Home ===== -->
+      <div class="page active" id="page-home">
+        <div class="home-banner">
+          <div class="banner-title">历史营销活动展板</div>
+          <div class="banner-sub">全景回顾 · 数据复盘 · 经验传承</div>
+          <div class="banner-stats">
+            <div class="banner-stat"><div class="num">12</div><div class="label">累计活动</div></div>
+            <div class="banner-stat"><div class="num">3.76x</div><div class="label">平均ROI</div></div>
+            <div class="banner-stat"><div class="num">¥15.8亿</div><div class="label">总产出</div></div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">活动分类 <span class="more">点击筛选 ›</span></div>
+          <div class="cat-grid" id="catGrid"></div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">进行中的活动</div>
+          <div class="mini-list" id="ongoingList"></div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">最近活动</div>
+          <div class="mini-list" id="recentList"></div>
+        </div>
+      </div>
+
+      <!-- ===== Campaigns ===== -->
+      <div class="page" id="page-campaigns">
+        <div class="search-box">
+          <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><circle cx="6.5" cy="6.5" r="5" stroke="#999" stroke-width="1.5"/><path d="M10.5 10.5 14 14" stroke="#999" stroke-width="1.5" stroke-linecap="round"/></svg>
+          <input type="text" id="searchInput" placeholder="搜索活动名称">
+        </div>
+        <div class="chips-scroll" id="typeChips">
+          <span class="chip active" data-filter="all">全部</span>
+          <span class="chip" data-filter="促销">促销</span>
+          <span class="chip" data-filter="品牌">品牌</span>
+          <span class="chip" data-filter="节日">节日</span>
+          <span class="chip" data-filter="社群">社群</span>
+          <span class="chip" data-filter="内容">内容</span>
+          <span class="chip" data-filter="跨界">跨界</span>
+        </div>
+        <div class="camp-list-wrap" id="campaignList"></div>
+      </div>
+
+      <!-- ===== Data ===== -->
+      <div class="page" id="page-data">
+        <div class="data-grid">
+          <div class="data-card"><div class="d-value" id="dTotal">12</div><div class="d-label">活动总数</div></div>
+          <div class="data-card"><div class="d-value green">3.76x</div><div class="d-label">平均ROI</div></div>
+          <div class="data-card"><div class="d-value">¥4.2亿</div><div class="d-label">总投入</div></div>
+          <div class="data-card"><div class="d-value green">¥15.8亿</div><div class="d-label">总产出</div></div>
+        </div>
+        <div class="chart-card">
+          <div class="section-title" style="margin-bottom:4px;">月度产出（亿元）</div>
+          <div class="bar-chart" id="barChart"></div>
+        </div>
+        <div class="chart-card">
+          <div class="section-title" style="margin-bottom:12px;">活动类型分布</div>
+          <div id="typeDist"></div>
+        </div>
+      </div>
+
+      <!-- ===== Mine ===== -->
+      <div class="page" id="page-mine">
+        <div class="mine-header">
+          <div class="avatar">营</div>
+          <div>
+            <div class="mine-name">市场运营部</div>
+            <div class="mine-sub">2024年度 · 12场营销活动复盘</div>
+          </div>
+        </div>
+        <div class="menu-group">
+          <div class="menu-item"><span class="m-icon">📤</span>导出活动数据<span class="m-arrow">›</span></div>
+          <div class="menu-item"><span class="m-icon">🔗</span>分享展板<span class="m-arrow">›</span></div>
+          <div class="menu-item"><span class="m-icon">🎨</span>主题样式<span class="m-arrow">›</span></div>
+        </div>
+        <div class="menu-group">
+          <div class="menu-item"><span class="m-icon">⚙️</span>设置<span class="m-arrow">›</span></div>
+          <div class="menu-item"><span class="m-icon">ℹ️</span>关于展板<span class="m-arrow">›</span></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- TabBar -->
+    <div class="tabbar" id="tabbar">
+      <div class="tab-item active" data-tab="home">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5.5v-6h-5v6H4a1 1 0 0 1-1-1z"/></svg>
+        <span>首页</span>
+      </div>
+      <div class="tab-item" data-tab="campaigns">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4M16 2v4M3 9h18"/></svg>
+        <span>活动</span>
+      </div>
+      <div class="tab-item" data-tab="data">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
+        <span>数据</span>
+      </div>
+      <div class="tab-item" data-tab="mine">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-3.5 4.5-5 8-5s6.5 1.5 8 5"/></svg>
+        <span>我的</span>
+      </div>
+    </div>
+
+    <!-- ===== Detail Page ===== -->
+    <div class="detail-page" id="detailPage">
+      <div class="detail-nav">
+        <div class="back-btn" id="detailBack">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M12.5 4 6.5 10l6 6" stroke="#111" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <div class="d-title" id="detailTitle">活动详情</div>
+        <div class="capsule">
+          <span class="more">···</span>
+          <span class="sep"></span>
+          <span class="circle"></span>
+        </div>
+      </div>
+      <div class="detail-body" id="detailBody"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ===== Campaign Data =====
+const campaigns = [
+  { id: 1, name: "双11全球狂欢节·全网破价", type: "促销", status: "completed",
+    startDate: "2024-10-20", endDate: "2024-11-11",
+    budget: "¥8,000万", revenue: "¥3.2亿", roi: "4.0x", reach: "2.8亿", conversion: "6.2%",
+    channels: ["天猫", "京东", "抖音", "小红书"],
+    desc: "围绕「全网破价·不止5折」主题，联动5大电商平台，通过预售锁定+直播引爆+达人种草三板斧，实现GMV同比+45%。",
+    takeaways: ["预售期提前7天锁定60%目标GMV", "达人种草内容播放量超5亿次", "直播间峰值在线120万人"] },
+  { id: 2, name: "春节红包雨·全民送福", type: "节日", status: "completed",
+    startDate: "2024-02-01", endDate: "2024-02-15",
+    budget: "¥3,500万", revenue: "¥1.1亿", roi: "3.14x", reach: "1.5亿", conversion: "4.8%",
+    channels: ["微信", "支付宝", "抖音"],
+    desc: "春节品牌红包互动活动，集卡+分享裂变玩法，覆盖全国20+城市地标AR扫码，品牌曝光量突破15亿次。",
+    takeaways: ["集卡裂变率1:8.3超预期", "AR地标互动UV超3000万", "品牌搜索指数峰值提升210%"] },
+  { id: 3, name: "品牌焕新·「这就是young」", type: "品牌", status: "completed",
+    startDate: "2024-06-01", endDate: "2024-06-30",
+    budget: "¥5,000万", revenue: "¥2.3亿", roi: "4.6x", reach: "1.8亿", conversion: "5.5%",
+    channels: ["微博", "B站", "小红书", "户外"],
+    desc: "品牌年轻化焕新战役，签约新生代代言人，发布品牌TVC+线下快闪店+UGC挑战赛，Z世代品牌偏好度提升32%。",
+    takeaways: ["B站挑战赛投稿量超50万条", "快闪店打卡人次超80万", "Z世代品牌好感度+32pp"] },
+  { id: 4, name: "618年中大促·会员先行", type: "促销", status: "completed",
+    startDate: "2024-05-25", endDate: "2024-06-20",
+    budget: "¥6,000万", revenue: "¥2.1亿", roi: "3.5x", reach: "1.2亿", conversion: "5.1%",
+    channels: ["天猫", "京东", "私域"],
+    desc: "以会员为核心，提前72小时开放会员专场，叠加积分翻倍+专属优惠券，会员贡献GMV占比达68%。",
+    takeaways: ["会员复购率提升至58%", "私域新增会员120万", "客单价同比+22%"] },
+  { id: 5, name: "「小红书种草季」达人共创", type: "内容", status: "completed",
+    startDate: "2024-03-15", endDate: "2024-04-15",
+    budget: "¥1,200万", revenue: "¥4,800万", roi: "4.0x", reach: "8,500万", conversion: "3.2%",
+    channels: ["小红书", "微博"],
+    desc: "联动500+中腰部达人，以真实体验内容种草，累计产出笔记2300+篇，总互动量超1800万。",
+    takeaways: ["爆文率8.5%远超行业3%均值", "搜索转化率提升45%", "达人CPM低于行业20%"] },
+  { id: 6, name: "×故宫文创·国潮联名", type: "跨界", status: "completed",
+    startDate: "2024-09-10", endDate: "2024-10-10",
+    budget: "¥2,800万", revenue: "¥9,200万", roi: "3.29x", reach: "1.1亿", conversion: "4.3%",
+    channels: ["天猫", "线下", "小红书"],
+    desc: "与故宫文创跨界联名推出限量国潮系列，结合传统文化叙事+现代设计，联名款首日售罄，溢价30%。",
+    takeaways: ["限量款1小时售罄", "微博话题阅读量6.8亿", "品牌文化认知度+28%"] },
+  { id: 7, name: "私域社群·会员日计划", type: "社群", status: "ongoing",
+    startDate: "2024-07-01", endDate: "持续进行",
+    budget: "¥800万/年", revenue: "¥3,600万", roi: "4.5x", reach: "320万", conversion: "12.5%",
+    channels: ["微信社群", "企微", "小程序"],
+    desc: "每月8号会员日，社群专属秒杀+积分抽奖+拼团裂变，社群活跃度稳定在65%以上，复购贡献显著。",
+    takeaways: ["社群月活跃用户稳定65%", "会员日GMV占全月25%", "拼团裂变率1:4.2"] },
+  { id: 8, name: "抖音挑战赛#我的硬核日常", type: "内容", status: "completed",
+    startDate: "2024-04-01", endDate: "2024-04-21",
+    budget: "¥2,200万", revenue: "¥7,800万", roi: "3.55x", reach: "3.5亿", conversion: "2.8%",
+    channels: ["抖音"],
+    desc: "发起全民UGC挑战赛，邀请头部达人示范+品牌定制贴纸，挑战赛视频播放量突破18亿次。",
+    takeaways: ["UGC视频投稿量超120万", "品牌定制贴纸使用量980万次", "品牌声量份额+15pp"] },
+  { id: 9, name: "中秋礼遇·心意传递", type: "节日", status: "completed",
+    startDate: "2024-08-25", endDate: "2024-09-15",
+    budget: "¥1,800万", revenue: "¥6,500万", roi: "3.61x", reach: "6,200万", conversion: "5.8%",
+    channels: ["天猫", "京东", "私域", "线下"],
+    desc: "中秋限定礼盒+定制贺卡+视频祝福功能，主打情感连接，礼盒系列售出超50万套。",
+    takeaways: ["礼盒售出超50万套", "视频祝福功能使用率31%", "送礼场景客单价+45%"] },
+  { id: 10, name: "直播带货·品牌自播矩阵", type: "促销", status: "ongoing",
+    startDate: "2024-05-01", endDate: "持续进行",
+    budget: "¥1,500万/年", revenue: "¥8,200万", roi: "5.47x", reach: "9,800万", conversion: "8.2%",
+    channels: ["抖音", "天猫", "快手"],
+    desc: "搭建品牌自播矩阵，日播16小时+晚间大场策略，自播GMV占全渠道35%，主播团队从3人扩展至15人。",
+    takeaways: ["日均GMV稳定80万+", "自播转化率8.2%领先行业", "主播人效同比+60%"] },
+  { id: 11, name: "×电竞IP·游戏化营销", type: "跨界", status: "completed",
+    startDate: "2024-07-15", endDate: "2024-08-15",
+    budget: "¥3,200万", revenue: "¥1.1亿", roi: "3.44x", reach: "2.2亿", conversion: "3.8%",
+    channels: ["B站", "抖音", "游戏内"],
+    desc: "联合头部电竞IP推出游戏内限定皮肤+线下观赛派对+直播竞猜，触达年轻男性用户群体。",
+    takeaways: ["游戏皮肤领取量超800万", "线下观赛派对覆盖12城", "男性新客占比提升至42%"] },
+  { id: 12, name: "圣诞跨年·惊喜盲盒", type: "节日", status: "planned",
+    startDate: "2024-12-15", endDate: "2025-01-01",
+    budget: "¥2,500万", revenue: "预估¥8,500万", roi: "预估3.4x", reach: "预估1亿", conversion: "预估5.0%",
+    channels: ["天猫", "京东", "抖音", "私域"],
+    desc: "圣诞跨年双节联动，盲盒+集卡+跨年直播三重玩法，预计拉动Q4 GMV冲刺目标。",
+    takeaways: ["盲盒复购率预计30%+", "跨年直播间预计峰值100万+", "私域蓄水用户280万"] }
+];
+
+const typeIcons = { "促销": "💰", "品牌": "✨", "节日": "🎉", "社群": "👥", "内容": "📱", "跨界": "🤝" };
+const statusMap = { completed: "已完成", ongoing: "进行中", planned: "筹备中" };
+const statusClass = { completed: "done", ongoing: "ongoing", planned: "planned" };
+
+let currentFilter = 'all';
+let currentSearch = '';
+
+function fmtDate(d) { return d.replace(/^(\d{4})-(\d{2})-(\d{2})$/, '$1.$2.$3'); }
+
+function cardHTML(c) {
+  return `
+    <div class="camp-card" data-id="${c.id}">
+      <div class="type-icon t-${c.type}">${typeIcons[c.type]}</div>
+      <div class="camp-main">
+        <div class="camp-name">${c.name}<span class="status-tag ${statusClass[c.status]}">${statusMap[c.status]}</span></div>
+        <div class="camp-meta">${fmtDate(c.startDate)} ~ ${fmtDate(c.endDate)}</div>
+        <div class="camp-metrics">
+          <span class="roi">ROI<b>${c.roi}</b></span>
+          <span>触达<b>${c.reach}</b></span>
+          <span>转化<b>${c.conversion}</b></span>
+        </div>
+      </div>
+      <div class="camp-arrow">›</div>
+    </div>`;
+}
+
+// ===== Home Page =====
+function renderCatGrid() {
+  const cats = [["促销","💰","#fdeeee"],["品牌","✨","#f3efff"],["节日","🎉","#fef5e7"],["社群","👥","#e8f8ef"],["内容","📱","#e8f6fe"],["跨界","🤝","#f6ecff"]];
+  document.getElementById('catGrid').innerHTML = cats.map(([name, icon, bg]) => `
+    <div class="cat-item" data-type="${name}">
+      <div class="cat-icon" style="background:${bg}">${icon}</div>
+      <div class="name">${name}</div>
+    </div>`).join('');
+  document.querySelectorAll('#catGrid .cat-item').forEach(el => {
+    el.addEventListener('click', () => {
+      setFilter(el.dataset.type);
+      switchTab('campaigns');
+    });
+  });
+}
+
+function renderHome() {
+  const ongoing = campaigns.filter(c => c.status === 'ongoing');
+  const recent = [...campaigns].filter(c => c.status !== 'ongoing').sort((a,b) => new Date(b.startDate) - new Date(a.startDate)).slice(0, 4);
+  document.getElementById('ongoingList').innerHTML = ongoing.length
+    ? ongoing.map(cardHTML).join('')
+    : '<div class="empty-state">暂无进行中的活动</div>';
+  document.getElementById('recentList').innerHTML = recent.map(cardHTML).join('');
+  document.querySelectorAll('#ongoingList .camp-card, #recentList .camp-card').forEach(el => {
+    el.addEventListener('click', () => openDetail(parseInt(el.dataset.id)));
+  });
+}
+
+// ===== Campaigns Page =====
+function getFiltered() {
+  return campaigns.filter(c => {
+    const typeMatch = currentFilter === 'all' || c.type === currentFilter;
+    const searchMatch = !currentSearch || c.name.toLowerCase().includes(currentSearch.toLowerCase());
+    return typeMatch && searchMatch;
+  });
+}
+
+function renderCampaigns() {
+  const list = document.getElementById('campaignList');
+  const filtered = getFiltered();
+  if (!filtered.length) {
+    list.innerHTML = '<div class="empty-state"><div class="e-icon">🔍</div>没有找到匹配的活动</div>';
+    return;
+  }
+  list.innerHTML = filtered.map(cardHTML).join('');
+  list.querySelectorAll('.camp-card').forEach(el => {
+    el.addEventListener('click', () => openDetail(parseInt(el.dataset.id)));
+  });
+}
+
+// ===== Data Page =====
+function renderData() {
+  // 月度产出（示例数据，亿元）
+  const monthly = [0, 1.1, 0.5, 0.8, 0.8, 2.1, 1.5, 0.65, 1.55, 0.92, 3.2, 0.85];
+  const max = Math.max(...monthly);
+  const labels = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+  document.getElementById('barChart').innerHTML = monthly.map((v, i) => `
+    <div class="bar-col" title="${v}">
+      <div class="bar" style="height:${v ? Math.max(6, (v/max)*100) : 3}%"></div>
+      <div class="b-label">${labels[i]}</div>
+    </div>`).join('');
+
+  // 类型分布
+  const types = ["促销","品牌","节日","社群","内容","跨界"];
+  const counts = types.map(t => ({ t, n: campaigns.filter(c => c.type === t).length }));
+  const maxN = Math.max(...counts.map(c => c.n));
+  const colors = { "促销": "#fa5151", "品牌": "#7c4dff", "节日": "#fa9d3b", "社群": "#07c160", "内容": "#2f9dff", "跨界": "#a855f7" };
+  document.getElementById('typeDist').innerHTML = counts.map(c => `
+    <div class="dist-row">
+      <span class="dist-name">${typeIcons[c.t]} ${c.t}</span>
+      <div class="dist-bar"><div class="dist-fill" style="width:${(c.n/maxN)*100}%;background:${colors[c.t]}"></div></div>
+      <span class="dist-num">${c.n}场</span>
+    </div>`).join('');
+}
+
+// ===== Detail Page =====
+function openDetail(id) {
+  const c = campaigns.find(x => x.id === id);
+  if (!c) return;
+  document.getElementById('detailTitle').textContent = c.name;
+  document.getElementById('detailBody').innerHTML = `
+    <div class="detail-banner banner-${c.type}">
+      <h2>${c.name}</h2>
+      <div class="sub">${c.type} · ${c.startDate} ~ ${c.endDate}</div>
+    </div>
+    <div class="d-metrics">
+      <div class="d-metric"><div class="v" style="color:var(--wx-green)">${c.roi}</div><div class="l">投入产出比</div></div>
+      <div class="d-metric"><div class="v">${c.revenue}</div><div class="l">总产出</div></div>
+      <div class="d-metric"><div class="v">${c.budget}</div><div class="l">总投入</div></div>
+      <div class="d-metric"><div class="v" style="color:var(--wx-green)">${c.conversion}</div><div class="l">转化率</div></div>
+    </div>
+    <div class="d-section">
+      <h4>活动信息</h4>
+      <div class="d-row"><span class="k">活动状态</span><span class="v">${statusMap[c.status]}</span></div>
+      <div class="d-row"><span class="k">开始时间</span><span class="v">${c.startDate}</span></div>
+      <div class="d-row"><span class="k">结束时间</span><span class="v">${c.endDate}</span></div>
+      <div class="d-row"><span class="k">触达人群</span><span class="v">${c.reach}</span></div>
+      <div class="d-row"><span class="k">触达渠道</span><span class="v">${c.channels.join('、')}</span></div>
+    </div>
+    <div class="d-section">
+      <h4>活动概述</h4>
+      <p class="d-desc">${c.desc}</p>
+    </div>
+    <div class="d-section">
+      <h4>关键成果</h4>
+      ${c.takeaways.map(t => `<div class="d-takeaway"><span class="tk">✓</span>${t}</div>`).join('')}
+    </div>`;
+  document.getElementById('detailPage').classList.add('open');
+}
+
+function closeDetail() {
+  document.getElementById('detailPage').classList.remove('open');
+}
+
+// ===== Tab Navigation =====
+const tabTitles = { home: '营销活动', campaigns: '活动列表', data: '数据看板', mine: '我的' };
+
+function switchTab(tab) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + tab).classList.add('active');
+  document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+  document.querySelector(`.tab-item[data-tab="${tab}"]`).classList.add('active');
+  document.getElementById('navTitle').textContent = tabTitles[tab];
+  document.getElementById('page-area-scroll')?.scrollTo ? document.querySelector('.page-area').scrollTo(0,0) : null;
+}
+
+function setFilter(type) {
+  currentFilter = type;
+  document.querySelectorAll('#typeChips .chip').forEach(c => c.classList.toggle('active', c.dataset.filter === type));
+  renderCampaigns();
+}
+
+// ===== Events =====
+document.getElementById('tabbar').addEventListener('click', e => {
+  const item = e.target.closest('.tab-item');
+  if (item) switchTab(item.dataset.tab);
+});
+
+document.getElementById('typeChips').addEventListener('click', e => {
+  const chip = e.target.closest('.chip');
+  if (chip) setFilter(chip.dataset.filter);
+});
+
+document.getElementById('searchInput').addEventListener('input', e => {
+  currentSearch = e.target.value.trim();
+  renderCampaigns();
+});
+
+document.getElementById('detailBack').addEventListener('click', closeDetail);
+
+// ===== Init =====
+renderCatGrid();
+renderHome();
+renderCampaigns();
+renderData();
+</script>
+
+</body>
+</html>

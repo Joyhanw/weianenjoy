@@ -1,0 +1,1159 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>通用蓝图框架教程</title>
+<style>
+:root {
+  --navy:#0f2b46; --navy-light:#1a3f63; --navy-lighter:#2a5580;
+  --gold:#c8963e; --gold-light:#d4a85a; --gold-pale:#fdf6ed;
+  --white:#fff; --bg:#f4f6f9; --card:#fff;
+  --text-primary:#1d2129; --text-secondary:#4e5969; --text-muted:#86909c;
+  --border:#e5e6eb; --border-light:#f2f3f5;
+  --green:#00b42a; --orange:#ff7d00; --red:#f53f3f; --blue:#165dff;
+  --shadow:0 4px 16px rgba(0,0,0,.06);
+  --shadow-lg:0 8px 32px rgba(0,0,0,.1);
+  --transition:.35s cubic-bezier(.4,0,.2,1);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text-primary);line-height:1.7;height:100vh;overflow:hidden}
+
+/* ===== App ===== */
+#app{height:100vh;width:100vw;position:relative;overflow:hidden}
+.slide{position:absolute;inset:0;display:flex;flex-direction:column;opacity:0;pointer-events:none;transition:opacity var(--transition);overflow-y:auto;padding:32px 48px 100px}
+.slide.active{opacity:1;pointer-events:auto;z-index:2}
+.slide-content{max-width:1200px;margin:0 auto;width:100%}
+
+/* ===== Topbar ===== */
+.topbar{position:fixed;top:0;left:0;right:0;height:4px;background:var(--border);z-index:120}
+.topbar-fill{height:100%;background:linear-gradient(90deg,var(--navy),var(--gold));transition:width .4s ease;width:0}
+
+/* ===== Side Nav ===== */
+.side-nav{position:fixed;right:12px;top:50%;transform:translateY(-50%);z-index:110;display:flex;flex-direction:column;gap:14px}
+.side-nav-item{display:flex;align-items:center;gap:8px;cursor:pointer;flex-direction:row-reverse}
+.side-nav-dot{width:10px;height:10px;border-radius:50%;background:var(--border);transition:all var(--transition)}
+.side-nav-item.active .side-nav-dot{background:var(--navy);box-shadow:0 0 0 3px rgba(15,43,70,.2);width:12px;height:12px}
+.side-nav-item:hover .side-nav-dot{background:var(--gold)}
+.side-nav-label{font-size:12px;color:var(--text-muted);white-space:nowrap;opacity:0;transform:translateX(6px);transition:all var(--transition);pointer-events:none}
+.side-nav-item:hover .side-nav-label,.side-nav-item.active .side-nav-label{opacity:1;transform:translateX(0)}
+
+/* ===== Bottom Nav ===== */
+.nav-bottom{position:fixed;bottom:0;left:0;right:0;z-index:100;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:center;padding:10px 20px;gap:6px}
+.nav-dot{width:28px;height:3px;border-radius:2px;background:var(--border);border:none;cursor:pointer;transition:all var(--transition)}
+.nav-dot.active{width:42px;background:var(--navy)}
+.nav-dot:hover{background:var(--gold)}
+
+/* ===== Arrows ===== */
+.nav-arrow{position:fixed;bottom:80px;width:36px;height:36px;border-radius:50%;border:1px solid var(--border);background:var(--white);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--text-secondary);transition:all .15s;z-index:100}
+.nav-arrow:hover{background:var(--navy);color:var(--white);border-color:var(--navy)}
+.nav-arrow.left{left:24px}
+.nav-arrow.right{right:56px}
+.nav-label{position:fixed;bottom:52px;left:50%;transform:translateX(-50%);font-size:12px;color:var(--text-muted);z-index:100}
+
+/* ===== Typo ===== */
+.section-title{font-size:22px;font-weight:700;color:var(--navy);margin-bottom:4px;display:flex;align-items:center;gap:10px}
+.section-subtitle{font-size:13px;color:var(--text-muted);margin-bottom:20px}
+.highlight{color:var(--gold);font-weight:600}
+.pill{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:500}
+.pill-blue{background:#f0f5ff;color:var(--blue)}
+.pill-green{background:#f0fdf4;color:var(--green)}
+.pill-orange{background:#fff7e8;color:var(--orange)}
+.pill-gold{background:var(--gold-pale);color:var(--gold)}
+
+/* ===== Cards ===== */
+.card-grid{display:grid;gap:14px}
+.cols-2{grid-template-columns:1fr 1fr}
+.cols-3{grid-template-columns:1fr 1fr 1fr}
+.cols-4{grid-template-columns:1fr 1fr 1fr 1fr}
+.cols-5{grid-template-columns:1fr 1fr 1fr 1fr 1fr}
+.info-card{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:18px;transition:all .15s}
+.info-card:hover{box-shadow:var(--shadow)}
+.info-card-title{font-size:14px;font-weight:600;color:var(--navy);margin-bottom:4px;display:flex;align-items:center;gap:6px}
+.info-card-desc{font-size:12.5px;color:var(--text-secondary);line-height:1.7}
+
+/* ===== Story line ===== */
+.story-line{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;padding:12px 0}
+.story-node{background:var(--white);border:2px solid var(--border);border-radius:8px;padding:10px 18px;font-size:14px;font-weight:600;color:var(--navy)}
+.story-arrow{color:var(--gold);font-size:18px;font-weight:700}
+
+/* ===== Code Blocks ===== */
+.code-block{position:relative;background:#1a2332;border-radius:10px;margin:10px 0;overflow:hidden}
+.code-block-header{display:flex;align-items:center;justify-content:space-between;padding:7px 14px;background:rgba(255,255,255,.04);border-bottom:1px solid rgba(255,255,255,.06);font-size:11px;color:rgba(255,255,255,.4)}
+.copy-btn{display:inline-flex;align-items:center;gap:4px;padding:4px 12px;border:1px solid rgba(255,255,255,.15);border-radius:4px;background:transparent;color:rgba(255,255,255,.6);cursor:pointer;font-size:11px;transition:all .15s;font-family:inherit}
+.copy-btn:hover{background:rgba(255,255,255,.08);color:#fff;border-color:rgba(255,255,255,.3)}
+.copy-btn.copied{background:rgba(0,180,42,.2);border-color:var(--green);color:var(--green)}
+.code-block pre{padding:14px 16px;margin:0;overflow-x:auto;font-family:'SF Mono','Fira Code',Consolas,Monaco,monospace;font-size:12.5px;line-height:1.8;color:#e6edf3}
+.code-block pre code{white-space:pre-wrap;word-break:break-word}
+
+/* ===== Gold / Think blocks ===== */
+.gold-block{border-left:3px solid var(--gold);background:var(--gold-pale);padding:12px 16px;border-radius:0 6px 6px 0;margin:14px 0;font-size:13px;color:var(--text-primary);line-height:1.8}
+.think-block{border-left:3px solid var(--blue);background:#f0f5ff;padding:12px 16px;border-radius:0 6px 6px 0;margin:14px 0;font-size:13px;color:var(--text-primary);line-height:1.8}
+
+/* ===== Check lists ===== */
+.checklist{list-style:none;display:flex;flex-direction:column;gap:5px}
+.checklist li{display:flex;align-items:center;gap:10px;padding:9px 12px;background:#fafbfc;border-radius:6px;font-size:13px;color:var(--text-secondary);cursor:pointer;transition:all .15s;user-select:none}
+.checklist li:hover{background:#f0f5ff}
+.checklist li .chk{width:18px;height:18px;border:2px solid var(--border);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:11px;color:transparent;transition:all .15s;flex-shrink:0}
+.checklist li.checked .chk{background:var(--green);border-color:var(--green);color:#fff}
+.checklist li.checked{color:var(--green)}
+
+/* ===== Matrix ===== */
+.matrix-table{width:100%;border-collapse:collapse;font-size:12px}
+.matrix-table th,.matrix-table td{border:1px solid var(--border);padding:10px 12px;text-align:center}
+.matrix-table th{background:var(--navy);color:#fff;font-weight:500}
+.matrix-table td{transition:all .12s;background:var(--white)}
+.matrix-table td:hover{background:var(--gold-pale)}
+.matrix-table .corner{background:#f7f8fa;color:var(--text-muted);font-size:11px}
+
+/* ===== Step num ===== */
+.step-num{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:var(--navy);color:#fff;font-size:13px;font-weight:700;flex-shrink:0;margin-right:8px}
+
+/* ===== Divider ===== */
+.divider{border-top:1px solid var(--border-light);margin:18px 0 16px}
+
+/* ===== Tag ===== */
+.tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:500;margin:1px 2px}
+.tag-blue{background:#f0f5ff;color:var(--blue)}
+.tag-green{background:#f0fdf4;color:var(--green)}
+.tag-orange{background:#fff7e8;color:var(--orange)}
+
+/* ===== Timeline ===== */
+.timeline{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin:12px 0}
+.timeline-item{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:20px;border-top:3px solid var(--border);transition:all .15s}
+.timeline-item:hover{box-shadow:var(--shadow)}
+.timeline-item.p1{border-top-color:var(--blue)}
+.phase-num{font-size:11px;color:var(--text-muted);font-weight:600;margin-bottom:2px}
+.phase-title{font-size:15px;font-weight:700;color:var(--navy);margin-bottom:4px}
+.phase-time{font-size:11px;color:var(--gold);font-weight:600;margin-bottom:8px}
+.phase-goal{font-size:12px;color:var(--text-secondary);margin-bottom:8px}
+.phase-list{list-style:none;font-size:11.5px;color:var(--text-secondary);line-height:1.9}
+.phase-list li::before{content:'• ';color:var(--navy);font-weight:700}
+
+/* ===== Drawer ===== */
+.drill-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;opacity:0;pointer-events:none;transition:opacity .25s}
+.drill-overlay.open{opacity:1;pointer-events:auto}
+.drill-panel{position:fixed;top:0;right:-520px;width:460px;height:100vh;background:var(--white);z-index:201;box-shadow:-4px 0 24px rgba(0,0,0,.15);transition:right .35s cubic-bezier(.4,0,.2,1);overflow-y:auto;padding:32px 28px}
+.drill-panel.open{right:0}
+.drill-close{position:sticky;top:0;float:right;width:32px;height:32px;border:1px solid var(--border);background:var(--white);border-radius:8px;cursor:pointer;font-size:16px;color:var(--text-muted);display:flex;align-items:center;justify-content:center;z-index:1}
+.drill-close:hover{background:var(--bg);color:var(--text-primary)}
+.drill-title{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:4px}
+.drill-subtitle{font-size:13px;color:var(--text-secondary);margin-bottom:18px;line-height:1.6}
+.drill-section{margin-bottom:16px}
+.drill-section h4{font-size:12px;color:var(--text-muted);margin-bottom:8px;font-weight:500;text-transform:uppercase;letter-spacing:.5px}
+.drill-section .content{font-size:13px;color:var(--text-primary);line-height:1.9}
+.dc-item{display:flex;gap:8px;padding:6px 0;border-bottom:1px solid var(--border-light);font-size:12.5px;line-height:1.6}
+.dc-item:last-child{border:none}
+.dc-num{color:var(--navy);font-weight:700;min-width:22px;flex-shrink:0}
+.dc-text{color:var(--text-secondary)}
+
+/* ===== Cover ===== */
+.cover-center{text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh}
+.cover-icon{font-size:56px;margin-bottom:16px}
+.cover-title{font-size:30px;font-weight:700;color:var(--navy);margin-bottom:8px}
+.cover-subtitle{font-size:15px;color:var(--gold);font-weight:500;margin-bottom:8px}
+.cover-divider{width:60px;height:3px;background:var(--gold);margin:16px auto 20px;border-radius:2px}
+
+/* ===== Responsive ===== */
+@media(max-width:768px){
+  .slide{padding:24px 16px 90px}
+  .card-grid.cols-2,.card-grid.cols-3,.card-grid.cols-4,.card-grid.cols-5{grid-template-columns:1fr}
+  .timeline{grid-template-columns:1fr}
+  .drill-panel{width:100vw}
+  .nav-arrow.left{left:8px}.nav-arrow.right{right:40px}
+  .story-line{gap:6px}
+  .story-node{padding:6px 10px;font-size:12px}
+}
+</style>
+</head>
+<body>
+
+<div id="app"></div>
+
+<!-- Top bar -->
+<div class="topbar"><div class="topbar-fill" id="topbarFill"></div></div>
+
+<!-- Side nav dots -->
+<div class="side-nav" id="sideNav"></div>
+
+<!-- Drill -->
+<div class="drill-overlay" id="drillOverlay" onclick="closeDrill()"></div>
+<div class="drill-panel" id="drillPanel"></div>
+
+<!-- Bottom nav -->
+<div class="nav-bottom" id="navBottom"></div>
+
+<!-- Arrows -->
+<button class="nav-arrow left" onclick="prevSlide()" title="上一页">◂</button>
+<button class="nav-arrow right" onclick="nextSlide()" title="下一页">▸</button>
+<div class="nav-label" id="navLabel"></div>
+
+<script>
+// ============ DATA ============
+const TOTAL = 8;
+const sideLabels = ['封面','资料收集\n& 理解问题','梳理角色\n& 职责','设计架构\n& 拆解流程','建设路线\n& 一期范围','多轮确认\n& 生成HTML','5页蓝图\n输出规范','Skill模板\n& 检查清单'];
+
+// ============ SLIDE HTML ============
+const slidesHTML = [
+  // SLIDE 0: Cover
+  `<div class="slide-content">
+    <div class="cover-center">
+      <div class="cover-icon">📘</div>
+      <div class="cover-title">通用蓝图框架教程</div>
+      <div class="cover-subtitle">企业级战略蓝图 · 设计方法论</div>
+      <div class="cover-divider"></div>
+      <div style="max-width:600px;font-size:13px;color:var(--text-secondary);line-height:2.2;text-align:left;margin:0 auto">
+        本教程记录了一套<strong>可复用的蓝图设计方法论</strong>——<br>
+        不是教你怎么画PPT，而是教你怎么<strong>思考</strong>：<br><br>
+        · 拿到一个客户项目，从哪开始？<br>
+        · 怎么把混乱的需求梳理成清晰的方案？<br>
+        · 怎么让方案形成一条客户听得懂的<strong>故事线</strong>？<br>
+        · 怎么把方案落地成<strong>可交互的HTML蓝图</strong>？<br><br>
+        以<strong>泰隆银行AI应用创新平台</strong>为案例，还原整个设计过程。<br>
+        <span style="color:var(--text-muted)">每一步的提示词都可以直接复制使用。</span>
+      </div>
+      <div class="story-line" style="margin-top:18px">
+        <span class="story-node">问题</span><span class="story-arrow">→</span>
+        <span class="story-node">目标</span><span class="story-arrow">→</span>
+        <span class="story-node">方案</span><span class="story-arrow">→</span>
+        <span class="story-node">角色</span><span class="story-arrow">→</span>
+        <span class="story-node">路线</span><span class="story-arrow">→</span>
+        <span class="story-node">落地</span>
+      </div>
+      <div style="margin-top:10px;font-size:11px;color:var(--text-muted)">唯安</div>
+    </div>
+  </div>`,
+
+  // SLIDE 1: Step 1-2
+  `<div class="slide-content">
+    <div class="section-title"><span class="step-num">1</span>资料收集与项目背景分析</div>
+    <div class="section-subtitle" style="margin-left:36px">先把客户给的材料喂给AI，让它帮你梳理</div>
+
+    <div style="font-weight:600;color:var(--gold);font-size:13px;margin-bottom:6px">💬 这一步的提示词</div>
+    <div class="code-block">
+      <div class="code-block-header"><span class="code-block-lang">分析材料 · 可复制</span><button class="copy-btn" onclick="copyCode(this,'s1-1')">📋 复制</button></div>
+      <pre><code id="code-s1-1">你先分析一下我上传给你的来源资料</code></pre>
+    </div>
+
+    <div class="think-block">
+      <strong>🧠 这一步在做什么：</strong><br>
+      把客户提供的所有材料（需求文档、会议纪要、组织架构等）直接给AI。不要自己先消化——让AI帮你提取关键信息、发现盲区。AI的分析往往会发现你没注意到的点。
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="section-title"><span class="step-num">2</span>理解客户问题 & 明确建设目标</div>
+    <div class="section-subtitle" style="margin-left:36px">从"客户现状"推导到"要解决什么"</div>
+
+    <div class="gold-block">
+      <strong>📌 泰隆银行的实际情况：</strong><br>
+      行内有上万名员工，每天产生大量业务需求，但总行科技资源有限，需求严重积压、响应缓慢。<br>
+      员工用Excel维护客户信息，技术资源被重复建设消耗，缺乏统一的能力复用和运营管理机制。
+    </div>
+
+    <div style="font-weight:600;color:var(--gold);font-size:13px;margin-bottom:6px">💬 这一步的提示词（核心）</div>
+    <div class="code-block">
+      <div class="code-block-header"><span class="code-block-lang">问题分析提示词 · 可复制</span><button class="copy-btn" onclick="copyCode(this,'s2-1')">📋 复制</button></div>
+      <pre><code id="code-s2-1">我现在需要输出两份东西：
+1. 针对这个项目的蓝图规划，要跟客户汇报
+2. 这个项目一期先实现的功能原型，带交互的，重点是给行内演示
+
+先梳理整个项目的架构蓝图，这个也要讲成故事线。比如：
+- 行内现在遇到的问题
+- 要解决这些问题需要做什么
+- 分几块来做
+- 这些是谁来做，分别承担什么职责
+- 需要做什么事情，对应系统的功能是什么
+- 串起来讲，再给客户看原型
+
+我现在给你的资料是自己梳理的，可能不准确。
+
+核心问题：行内员工有上万名，他们会提很多需求，但到总行后这些需求都积压在一起，没办法快速响应。
+
+解决方案方向：
+- 给员工提供一个入口，里面可以自己提需求、自己开发
+- 涉及不同角色：小白、技术、运营、管理者等
+- 可沉淀的企业能力，需求不需要重复创建
+- 如果涉及很难的需求，总行没有组件，通知总行来弄组件
+- 运营需要管理，管理员也要看
+
+现在行内也不知道要怎么管理这个，所以我们要给解决方案、给工具、教行内的人怎么做。
+
+你先分析一下，有问题就问我，不要捏造，然后我们确认一个方向。</code></pre>
+    </div>
+
+    <div class="think-block">
+      <strong>🧠 设计思路：</strong><br>
+      这个提示词的核心是<strong>用大白话把你知道的全部说出来</strong>——客户是谁、痛点是什么、你觉得大概方向是什么。不需要很专业，越直白越好。AI会帮你把碎片信息整理成结构化的分析。关键是<strong>不要捏造</strong>，不清楚的地方让AI反问你。
+    </div>
+  </div>`,
+
+  // SLIDE 2: Step 3
+  `<div class="slide-content">
+    <div class="section-title"><span class="step-num">3</span>梳理业务角色 & 职责划分</div>
+    <div class="section-subtitle" style="margin-left:36px">明确：谁使用？谁建设？谁管理？谁决策？</div>
+
+    <div class="gold-block">
+      <strong>📌 泰隆银行角色梳理过程：</strong><br>
+      前期不清楚具体组织架构时，先根据已知信息假设角色——客户经理、技术、运营、管理者。<br>
+      后续聊的过程中逐步细化：涉及审核 → 补充业务Owner；涉及安全 → 补充安全员。<br>
+      <strong>注意：</strong>初期角色可合并展示，等大框架确认后再细化。
+    </div>
+
+    <div style="font-weight:600;color:var(--gold);font-size:13px;margin-bottom:6px">💬 这一步的提示词</div>
+    <div class="code-block">
+      <div class="code-block-header"><span class="code-block-lang">角色确认对话 · 可复制</span><button class="copy-btn" onclick="copyCode(this,'s3-1')">📋 复制</button></div>
+      <pre><code id="code-s3-1">1. 主要服务对象应该是全体员工，每个员工的职责不一样，这个需要我们根据解决方案跟银行的人说每个职位的职责。已知的有小白客户经理、技术人员、运营、管理人员，其他的需要我们来分析。
+2. 演示方向要两者结合，可以做成角色切换的——哪个角色进来看到什么内容。
+3. 一期原型要做成贴合真实系统的，不是简单的demo。
+4. 泰隆有内部系统，需要和内部系统对接的要说明对接什么。前期先按单独的HTML来做。
+5. 客户已经说明了诉求，我们要帮客户解决问题，还要跟客户规划怎么管理、怎么用，能真实解决他们的问题。
+6. 原型可以分角色，但要展示整个功能业务流程。先梳理一期要做的事情对应的原型，分阶段的。</code></pre>
+    </div>
+
+    <div class="think-block">
+      <strong>🧠 设计思路：</strong><br>
+      角色梳理不是一次完成的。先画大框——需求侧（谁用）和供给侧（谁建），再逐层细化。<br>
+      关键原则：<strong>前期大胆假设，后期逐步验证</strong>。不清楚的角色可以先合并，比如"安全员+合规"合并为一类，等跟客户聊完再拆分。
+    </div>
+
+    <div style="margin-top:16px">
+      <div style="font-weight:600;color:var(--navy);font-size:14px;margin-bottom:8px">📊 最终输出的角色体系（泰隆银行示例）</div>
+      <table class="matrix-table">
+        <tr><th class="corner">层级 \\ 角色</th><th>员工</th><th>Owner</th><th>科技</th><th>运营</th></tr>
+        <tr><td style="font-weight:600;background:#fafbfc">总行</td>
+          <td>提出需求<br><span class="tag tag-blue">使用者</span></td>
+          <td>审核管理<br><span class="tag tag-orange">决策者</span></td>
+          <td>能力建设<br><span class="tag tag-blue">建设者</span></td>
+          <td>治理运营<br><span class="tag tag-green">管理者</span></td>
+        </tr>
+        <tr><td style="font-weight:600;background:#fafbfc">分行</td>
+          <td>创建应用<br><span class="tag tag-blue">使用者</span></td>
+          <td>价值确认<br><span class="tag tag-orange">决策者</span></td>
+          <td>-</td><td>-</td>
+        </tr>
+        <tr><td style="font-weight:600;background:#fafbfc">支行</td>
+          <td>日常使用<br><span class="tag tag-blue">使用者</span></td>
+          <td>-</td><td>-</td><td>-</td>
+        </tr>
+      </table>
+    </div>
+  </div>`,
+
+  // SLIDE 3: Step 4-5
+  `<div class="slide-content">
+    <div class="section-title"><span class="step-num">4</span>设计总体解决方案架构</div>
+    <div class="section-subtitle" style="margin-left:36px">从"遇到什么问题"推导到"需要什么能力"</div>
+
+    <div class="think-block">
+      <strong>🧠 思考链条（这是脑暴的过程，人的思维是核心）：</strong><br>
+      现在的问题是<strong>需求混乱</strong> → 要解决需求治理 → 怎么解决？<br>
+      ① 怎么提需求 → ② 提完需求怎么形成应用 → ③ 形成应用需要什么技术和人 → ④ 做出来给谁用 → ⑤ 他怎么用 → ⑥ 用完之后的流程<br><br>
+      <strong>每个问题都要自问自答，或者跟AI对话找到答案。</strong>想不清楚就继续问，直到逻辑自洽。
+    </div>
+
+    <div class="gold-block">
+      <strong>📌 泰隆银行的答案：N中心 + 统一底座</strong><br>
+      <div style="text-align:center;font-size:14px;font-weight:600;color:var(--navy);padding:6px 0">
+        需求创新中心 → 应用生产中心 → 企业能力中心 → 运营治理中心 → 数据管理中心
+      </div>
+      <div style="text-align:center;font-size:18px;color:var(--gold)">↓</div>
+      <div style="text-align:center;font-size:14px;font-weight:600;color:var(--navy-light)">AI基础技术底座</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="section-title"><span class="step-num">5</span>拆解业务流程 & 系统能力</div>
+    <div class="section-subtitle" style="margin-left:36px">最终目的：谁来操作、操作什么功能、产生什么结果</div>
+
+    <div class="gold-block">
+      <strong>📌 泰隆银行业务闭环：</strong><br>
+      <div style="text-align:center;font-size:13px;font-weight:600;color:var(--navy);padding:4px 0;overflow-x:auto">
+        需求产生 → 需求分析 → 方案设计 → 应用生成 → 测试发布 → 员工使用 → 反馈优化 → 能力沉淀
+      </div>
+    </div>
+
+    <div style="font-weight:600;color:var(--gold);font-size:13px;margin-bottom:6px">💬 架构+流程设计提示词</div>
+    <div class="code-block">
+      <div class="code-block-header"><span class="code-block-lang">设计推演提示词 · 可复制</span><button class="copy-btn" onclick="copyCode(this,'s5-1')">📋 复制</button></div>
+      <pre><code id="code-s5-1">蓝图要能讲成故事线。除了我发给你的整体视角，最好也要输出每个节点——比如客户经理小白要做什么、涉及什么内容。
+
+先讲大方向，再拆小方向：
+1. 先梳理整个功能体系
+2. 再看分几期做
+3. 每一期要实现什么
+
+每个流程节点明确：
+- 谁来操作
+- 操作系统的什么功能
+- 能产生什么结果
+
+架构采用「N中心 + 统一底座」的形式。每个中心说明：解决什么问题、核心能力是什么。</code></pre>
+    </div>
+
+    <div class="think-block">
+      <strong>🧠 设计思路：</strong><br>
+      架构不是拍脑袋画几个框——每个"中心"都要回答：<strong>它解决什么具体问题？</strong>如果某个中心说不清解决什么问题，就说明不需要它。反过来，如果有个问题没有中心在解决，就说明架构有缺口。
+    </div>
+  </div>`,
+
+  // SLIDE 4: Step 6-7
+  `<div class="slide-content">
+    <div class="section-title"><span class="step-num">6</span>确认分阶段建设路线</div>
+    <div class="section-subtitle" style="margin-left:36px">核心：明确目标，体现重点</div>
+
+    <div class="think-block">
+      <strong>🧠 设计思路：</strong><br>
+      在前期需要和商务/项目经理明确公司对这个项目的规划。根据汇报需求决定是否展示建设路线。<br>
+      默认采用三阶段：<strong>价值验证 → 能力沉淀 → 规模运营</strong>。<br>
+      这个不是随便分的——第一阶段必须能<strong>独立跑通闭环</strong>、让客户看到价值，否则就没有后续。
+    </div>
+
+    <div class="timeline">
+      <div class="timeline-item p1">
+        <div class="phase-num">第一阶段</div>
+        <div class="phase-title">价值验证</div>
+        <div class="phase-goal"><strong>目标：</strong>跑通业务闭环</div>
+        <ul class="phase-list">
+          <li>需求提出</li>
+          <li>AI生成应用</li>
+          <li>应用发布使用</li>
+          <li>基础运营机制</li>
+        </ul>
+      </div>
+      <div class="timeline-item" style="border-top-color:var(--gold)">
+        <div class="phase-num">第二阶段</div>
+        <div class="phase-title">能力沉淀</div>
+        <div class="phase-goal"><strong>目标：</strong>平台能力体系化</div>
+        <ul class="phase-list">
+          <li>能力中心建设</li>
+          <li>模板市场沉淀</li>
+          <li>规则体系完善</li>
+          <li>运营治理深化</li>
+        </ul>
+      </div>
+      <div class="timeline-item" style="border-top-color:var(--green)">
+        <div class="phase-num">第三阶段</div>
+        <div class="phase-title">规模运营</div>
+        <div class="phase-goal"><strong>目标：</strong>全行推广运营</div>
+        <ul class="phase-list">
+          <li>全行推广</li>
+          <li>生态建设</li>
+          <li>数据驱动</li>
+          <li>智能化升级</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="section-title"><span class="step-num">7</span>设计一期建设范围</div>
+    <div class="section-subtitle" style="margin-left:36px">让AI根据建设路线发挥 + 手工设定边界</div>
+
+    <div class="gold-block">
+      <strong>📌 泰隆银行一期范围：</strong><br>
+      <span class="tag tag-blue">产品能力</span> <span class="tag tag-blue">技术底座</span> <span class="tag tag-blue">安全治理</span> <span class="tag tag-blue">运营机制</span> <span class="tag tag-blue">试点应用</span>
+    </div>
+
+    <div style="font-weight:600;color:var(--gold);font-size:13px;margin-bottom:6px">💬 阶段规划提示词</div>
+    <div class="code-block">
+      <div class="code-block-header"><span class="code-block-lang">阶段 & 一期规划 · 可复制</span><button class="copy-btn" onclick="copyCode(this,'s7-1')">📋 复制</button></div>
+      <pre><code id="code-s7-1">先梳理整个功能，再看分几期做，每一期要实现什么。
+
+一期要做的内容：
+- 完成什么闭环
+- 解决什么问题
+- 达到什么效果
+
+一期必须包含：
+- 北极星指标（核心指标名称 + 指标定义 + 目标值）
+- 五维上线标准（价值、质量、安全、运营、能力）
+- 需求闭环（提出 → 分析澄清 → 生成应用 → 发布使用 → 反馈优化）
+- 应用生命周期闭环（创建 → 发布 → 运营 → 推广 → 退出）
+
+一期范围卡片：产品能力、技术底座、安全治理、运营机制、试点应用</code></pre>
+    </div>
+  </div>`,
+
+  // SLIDE 5: Step 8-10
+  `<div class="slide-content">
+    <div class="section-title"><span class="step-num">8</span>多轮对话确认</div>
+    <div class="section-subtitle" style="margin-left:36px">最重要的环节——反复推敲，确认方向不偏离</div>
+
+    <div class="think-block">
+      <strong>🧠 确认链条：</strong><br>
+      方向无误 → 架构确认 → 一期确认 → 蓝图展示确认<br><br>
+      <strong>这个环节会聊非常多轮。</strong>重要的是思维认知的体现——AI只是帮助理解或提供新思路，最终方向需要人来把握。<br><br>
+      <strong>核心检查：</strong><br>
+      · 当前要解决的问题对不对？<br>
+      · 解决方案能否自洽？<br>
+      · 设计是不是最优的？<br>
+      · 站在客户角度，这样设计能否接受？<br>
+      · 规划蓝图的时候，能想象出一期对应的原型吗？二期三期要做的内容有清晰认知吗？<br><br>
+      <strong>如果对后续阶段没有清晰认知，方向一定会偏离。</strong>
+    </div>
+
+    <div style="font-weight:600;color:var(--gold);font-size:13px;margin-bottom:6px">💬 确认对话示例</div>
+    <div class="code-block">
+      <div class="code-block-header"><span class="code-block-lang">多轮确认提示词 · 可复制</span><button class="copy-btn" onclick="copyCode(this,'s8-1')">📋 复制</button></div>
+      <pre><code id="code-s8-1">1. 交互深度两者结合，主要给客户看每个角色能看到哪些、操作哪些内容。
+2. 视角风格采用银行风格，金融科技风。
+3. 原型要贴合真实系统来给客户演示，加上角色切换是为了让客户知道每个角色进来看到什么。
+4. 先出蓝图的初稿，再不停思考、确认、优化、调整。
+
+确认核心不偏离：
+- 当前要解决的问题
+- 解决方案能否自洽
+- 设计是否最优
+- 站在客户角度这样设计能否接受
+- 在规划蓝图的时候要能想象出一期对应的原型，甚至二期三期要做的内容也要有清晰认知，那样方向才不会偏离</code></pre>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="section-title"><span class="step-num">9-10</span>生成蓝图内容 & 可交互HTML</div>
+    <div class="section-subtitle" style="margin-left:36px">从内容确认到最终输出</div>
+
+    <div class="think-block">
+      <strong>🧠 生成顺序：</strong><br>
+      ① 先看整体结构内容 → ② 再看每个模块交互细节 → ③ 确认流程 → ④ 扣每个页面的文案<br>
+      → ⑤ 套用Skill生成HTML → ⑥ 调整交互 → ⑦ 最终检查<br><br>
+      <strong>⚠️ 重要提醒：</strong>当改一个点的时候，AI可能会把别的地方也改坏，即使提示语非常精确也会改坏。聊到有成果的时候<strong>一定要自己备份</strong>。
+    </div>
+
+    <div style="font-weight:600;color:var(--gold);font-size:13px;margin-bottom:6px">💬 生成HTML提示词</div>
+    <div class="code-block">
+      <div class="code-block-header"><span class="code-block-lang">HTML生成 · 可复制</span><button class="copy-btn" onclick="copyCode(this,'s10-1')">📋 复制</button></div>
+      <pre><code id="code-s10-1">生成可交互的HTML蓝图：
+1. 页面可切换（Tab切换 + 左右翻页 + 底部分页导航）
+2. 架构卡片可点击查看详情
+3. 角色卡片可点击查看详情
+4. 流程节点可点击查看详情
+5. 所有详情统一使用右侧抽屉展示
+6. 风格：金融科技咨询报告风，深蓝#0F2B46 + 金色#C8963E + 浅灰#F4F6F9背景
+7. 抽屉样式：白色背景、右侧滑入、遮罩层、顶部关闭按钮</code></pre>
+    </div>
+  </div>`,
+
+  // SLIDE 6: 5-page output spec
+  `<div class="slide-content">
+    <div class="section-title">📐 5页蓝图输出规范（参考模板）</div>
+    <div class="section-subtitle">所有企业级蓝图统一采用此结构作为输出物</div>
+
+    <div class="story-line" style="margin-bottom:18px">
+      <span class="story-node">为什么建设？</span><span class="story-arrow">↓</span>
+      <span class="story-node">建设什么？</span><span class="story-arrow">↓</span>
+      <span class="story-node">谁参与？</span><span class="story-arrow">↓</span>
+      <span class="story-node">如何落地？</span><span class="story-arrow">↓</span>
+      <span class="story-node">一期做什么？</span>
+    </div>
+
+    <div class="card-grid cols-5" style="margin-bottom:20px">
+      <div class="info-card" style="text-align:center;border-top:3px solid var(--navy)">
+        <div style="font-size:28px;margin-bottom:4px">📄</div>
+        <div style="font-size:11px;color:var(--gold);font-weight:600;margin-bottom:2px">Page 1</div>
+        <div style="font-size:13px;font-weight:600;color:var(--navy);margin-bottom:4px">项目封面</div>
+        <div style="font-size:11px;color:var(--text-muted);line-height:1.5">项目名称+副标题+关键词<br>大留白·居中·简洁高级</div>
+      </div>
+      <div class="info-card" style="text-align:center;border-top:3px solid var(--gold)">
+        <div style="font-size:28px;margin-bottom:4px">🏗️</div>
+        <div style="font-size:11px;color:var(--gold);font-weight:600;margin-bottom:2px">Page 2</div>
+        <div style="font-size:13px;font-weight:600;color:var(--navy);margin-bottom:4px">全景建设蓝图</div>
+        <div style="font-size:11px;color:var(--text-muted);line-height:1.5">痛点→架构→角色→闭环<br>一页说清完整逻辑</div>
+      </div>
+      <div class="info-card" style="text-align:center;border-top:3px solid var(--blue)">
+        <div style="font-size:28px;margin-bottom:4px">👥</div>
+        <div style="font-size:11px;color:var(--gold);font-weight:600;margin-bottom:2px">Page 3</div>
+        <div style="font-size:13px;font-weight:600;color:var(--navy);margin-bottom:4px">角色职责矩阵</div>
+        <div style="font-size:11px;color:var(--text-muted);line-height:1.5">二维矩阵：层级×角色<br>每个单元格可点击查看</div>
+      </div>
+      <div class="info-card" style="text-align:center;border-top:3px solid var(--green)">
+        <div style="font-size:28px;margin-bottom:4px">🛤️</div>
+        <div style="font-size:11px;color:var(--gold);font-weight:600;margin-bottom:2px">Page 4</div>
+        <div style="font-size:13px;font-weight:600;color:var(--navy);margin-bottom:4px">分阶段建设路线</div>
+        <div style="font-size:11px;color:var(--text-muted);line-height:1.5">三阶段演进<br>每阶段：目标+内容+验收</div>
+      </div>
+      <div class="info-card" style="text-align:center;border-top:3px solid var(--orange)">
+        <div style="font-size:28px;margin-bottom:4px">📋</div>
+        <div style="font-size:11px;color:var(--gold);font-weight:600;margin-bottom:2px">Page 5</div>
+        <div style="font-size:13px;font-weight:600;color:var(--navy);margin-bottom:4px">一期建设计划</div>
+        <div style="font-size:11px;color:var(--text-muted);line-height:1.5">范围+目标+指标+闭环<br>回答"具体做什么"</div>
+      </div>
+    </div>
+
+    <div class="gold-block" style="margin-bottom:14px">
+      <strong>🎨 视觉规范：</strong>深蓝 #0F2B46 主色 · 金色 #C8963E 辅助 · 浅灰 #F4F6F9 背景 · 金融咨询报告风格<br>
+      <strong>📑 交互要求：</strong>Tab切换 + 左右翻页 · 卡片/角色/流程可点击 · 统一右侧抽屉展示详情
+    </div>
+
+    <div class="code-block">
+      <div class="code-block-header"><span class="code-block-lang">每阶段展示内容模板</span><button class="copy-btn" onclick="copyCode(this,'out-tpl')">📋 复制</button></div>
+      <pre><code id="code-out-tpl">阶段名称
+建设周期
+建设目标
+核心建设内容
+验收标准</code></pre>
+    </div>
+  </div>`,
+
+  // SLIDE 7: 通用蓝图 Skill 框架详解
+  `<div class="slide-content">
+    <div class="section-title">📋 通用蓝图 Skill 框架 — 完整说明</div>
+    <div class="section-subtitle">这个 Skill 是生成所有蓝图方案的<strong>统一规范</strong>，涵盖了从配色到交互、从结构到内容的全部标准。<br>掌握这 8 个模块，你就可以让 AI 按照统一风格生成任何项目的蓝图方案。</div>
+
+    <!-- 核心原则 -->
+    <div class="gold-block">
+      <strong>🧭 核心原则：问题 → 方案 → 角色 → 路线 → 落地</strong><br>
+      每一页都要讲清楚：<strong>当前有什么问题 → 要建什么来解决 → 谁来负责 → 分几步走 → 一期怎么落地</strong>。<br>
+      不要堆功能清单，每个模块都要回答<strong>"解决了什么问题"</strong>和<strong>"谁来用"</strong>。
+    </div>
+
+    <!-- 8大模块卡片 3x3 网格 -->
+    <div class="card-grid cols-3" style="margin-top:14px">
+      <div class="info-card" style="border-top:3px solid var(--navy)">
+        <div class="info-card-title">🎨 1. 设计系统</div>
+        <div class="info-card-desc">
+          <strong>深蓝+金色</strong>主色调，专业稳重。<br>
+          · 深蓝 #0f2b46 做标题和强调<br>
+          · 金色 #c8963e 做高亮和按钮<br>
+          · 5 种功能色区分模块<br>
+          · 字体：苹方/微软雅黑，14px 正文<br>
+          · 卡片白底 + 圆角 10px + 柔和阴影
+        </div>
+      </div>
+      <div class="info-card" style="border-top:3px solid var(--gold)">
+        <div class="info-card-title">🧭 2. 侧边导航</div>
+        <div class="info-card-desc">
+          <strong>右侧固定的圆圈导航栏</strong><br>
+          · 每个圆圈 10px，带标签文字<br>
+          · 当前页圆圈放大到 12px、深蓝填充<br>
+          · 鼠标悬停时标签从右侧滑出<br>
+          · 点击任意圆圈直接跳转对应页面
+        </div>
+      </div>
+      <div class="info-card" style="border-top:3px solid var(--blue)">
+        <div class="info-card-title">📐 3. 底部导航</div>
+        <div class="info-card-desc">
+          <strong>页面底部三件套，辅助翻页</strong><br>
+          · <strong>分页条</strong>：长条圆点（28×3px），当前页加宽到 42px<br>
+          · <strong>翻页箭头</strong>：左右 36px 圆形按钮，悬停变深蓝<br>
+          · <strong>键盘支持</strong>：←↑→↓ 翻页，Esc 关闭抽屉<br>
+          · 底部毛玻璃效果，显示"当前页 / 总页数"
+        </div>
+      </div>
+      <div class="info-card" style="border-top:3px solid var(--green)">
+        <div class="info-card-title">📂 4. 右侧抽屉</div>
+        <div class="info-card-desc">
+          <strong>所有详情统一用右侧抽屉展示</strong><br>
+          · 点击任何可展开内容 → 右侧滑出 460px 面板<br>
+          · 白色背景 + 半透明遮罩层<br>
+          · <strong>绝不用弹窗或跳转新页面</strong><br>
+          · 适用：架构卡片、角色卡片、旅程节点、矩阵单元格等
+        </div>
+      </div>
+      <div class="info-card" style="border-top:3px solid var(--orange)">
+        <div class="info-card-title">📄 5. 五页结构</div>
+        <div class="info-card-desc">
+          <strong>封面</strong> → 项目名 + 一句定位<br>
+          <strong>全景蓝图</strong> → 一页讲完：痛点 + 架构 + 角色 + 旅程（<span class="highlight">最重要</span>）<br>
+          <strong>角色矩阵</strong> → 组织层级 × 角色交叉表<br>
+          <strong>分阶段路线</strong> → 三期里程碑卡片<br>
+          <strong>一期实施计划</strong> → 交付物 + 运营策略 + 北极星指标
+        </div>
+      </div>
+      <div class="info-card" style="border-top:3px solid var(--navy-light)">
+        <div class="info-card-title">✅ 6. 内容质量规则</div>
+        <div class="info-card-desc">
+          <strong>红线（必须避免）：</strong><br>
+          · 堆功能不说明场景<br>
+          · 列能力不说解决什么问题<br>
+          · 把"问题"和"方案"拆到不同页<br>
+          <strong>必须做到：</strong><br>
+          · 每个模块都回答"解决什么"<br>
+          · 用具体例子代替抽象概念<br>
+          · 关键数字用金色高亮
+        </div>
+      </div>
+      <div class="info-card" style="border-top:3px solid var(--gold)">
+        <div class="info-card-title">🛠️ 7. 落地检查清单</div>
+        <div class="info-card-desc">
+          · CSS/JS 全部写在一个 HTML 文件里<br>
+          · 5 页就位 + 右侧导航 + 底部分页条可用<br>
+          · 翻页箭头 + 键盘 + 右侧抽屉正常<br>
+          · 全景页 4 区域完整<br>
+          · 配色 + 响应式 + 进度条 + 过渡动画全部到位
+        </div>
+      </div>
+      <div class="info-card" style="border-top:3px solid var(--blue)">
+        <div class="info-card-title">📱 8. 响应式适配</div>
+        <div class="info-card-desc">
+          <strong>1024px 以下（平板）：</strong><br>
+          · 时间线变竖排 · 抽屉全宽 · 导航圆点缩小<br>
+          <strong>640px 以下（手机）：</strong><br>
+          · 隐藏翻页箭头 · 所有卡片变为单列<br>
+          · 封面标题缩小到 22px
+        </div>
+      </div>
+    </div>
+
+    <!-- 故事线流程图 -->
+    <div class="think-block" style="margin-top:14px">
+      <strong>🔗 蓝图生成逻辑：</strong>不是从模板填空，而是<strong>从问题出发推导方案</strong>。
+    </div>
+    <div class="story-line" style="justify-content:center;margin-top:8px">
+      <span class="story-node" style="border-color:var(--red)">😣 当前问题</span>
+      <span class="story-arrow">→</span>
+      <span class="story-node" style="border-color:var(--blue)">💡 解决方案</span>
+      <span class="story-arrow">→</span>
+      <span class="story-node" style="border-color:var(--orange)">👥 角色体系</span>
+      <span class="story-arrow">→</span>
+      <span class="story-node" style="border-color:var(--green)">🗺️ 分阶段路线</span>
+      <span class="story-arrow">→</span>
+      <span class="story-node" style="border-color:var(--navy)">🚀 一期落地</span>
+    </div>
+
+    <div class="divider" style="margin-top:16px"></div>
+
+    <!-- 复制区域 -->
+    <div class="gold-block">
+      <strong>📥 下面是可直接使用的 SKILL.md 完整内容（已全部翻译为中文）</strong><br>
+      点击右上角"一键复制"按钮，保存为 <code style="background:var(--white);padding:2px 8px;border-radius:4px">.claude/skills/blueprint-template/SKILL.md</code>，然后在 Claude Code 中输入 <code style="background:var(--white);padding:2px 8px;border-radius:4px">/blueprint-template 你的项目名</code> 即可使用。
+    </div>
+    <div class="code-block" style="margin-top:8px">
+      <div class="code-block-header"><span class="code-block-lang">SKILL.md（中文版）· 单击一键复制全部</span><button class="copy-btn" onclick="copyCode(this,'skill-full')">📋 一键复制</button></div>
+      <pre><code id="code-skill-full">---
+name: blueprint-template
+description: "按故事线驱动的标准结构生成蓝图/建设方案 HTML 页面：问题 → 方案 → 角色 → 路线 → 落地。采用深蓝+金色专业配色，右侧圆圈节点导航，底部分页圆点，上下翻页箭头，所有下钻内容统一通过右侧抽屉展示。当用户需要创建蓝图方案、建设方案、规划方案或任何战略汇报方案时调用此 Skill，输出为单个自包含 HTML 文件。"
+license: MIT
+version: 1.0.0
+argument-hint: "[项目名称或主题]"
+---
+
+# 通用蓝图模板 Skill
+
+按照 **故事线驱动** 的标准，生成一个自包含的 HTML 蓝图页面。输出到 &#96;/Users/han/Documents/hn/&#96; 下，文件名自定。
+
+## 核心原则：问题 → 方案 → 角色 → 路线 → 落地
+
+每一页都必须遵循这条逻辑链。永远不要堆砌功能——每个组件都要锚定在它解决的问题和负责的角色上。
+
+---
+
+## 1. 设计系统 —— 深蓝 + 金色
+
+### 颜色令牌
+&#96;&#96;&#96;
+--navy:        #0f2b46   （主色：标题、强调、激活态）
+--navy-light:  #1a3f63   （辅助深蓝：渐变背景）
+--navy-lighter: #2a5580  （浅深蓝：表头）
+--gold:        #c8963e   （金色点缀：高亮、徽章、CTA 按钮）
+--gold-light:  #d4a85a   （浅金）
+--gold-pale:   #fdf6ed   （极浅金背景）
+--white:       #ffffff
+--bg:          #f4f6f9   （页面底色）
+--text:        #1e2a36   （正文颜色）
+--text-secondary: #5a6b7d （描述文字）
+--text-muted:  #8a99ab   （标签、辅助说明）
+--border:      #e2e8f0   （分割线、卡片边框）
+--shadow:      0 2px 12px rgba(0,0,0,.06)
+--shadow-lg:   0 8px 32px rgba(0,0,0,.1)
+--radius:      10px
+--radius-lg:   14px
+--transition:  0.3s cubic-bezier(.4,0,.2,1)
+&#96;&#96;&#96;
+
+### 功能强调色
+&#96;&#96;&#96;
+蓝色:   #3b82f6  （需求 / 创新）
+紫色:   #8b5cf6  （应用生产）
+橙色:   #f59e0b  （能力中心）
+绿色:   #10b981  （治理 / 运营）
+红色:   #e74c3c  （安全 / 风险）
+&#96;&#96;&#96;
+
+### 字体规范
+- 字体栈：&#96;"PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif&#96;
+- 段落标题：&#96;32px / 字重 700 / 深蓝色&#96;
+- 副标题：&#96;16px / 次要文字色&#96;
+- 正文：&#96;13-14px / 正文色&#96;
+- 标签/说明：&#96;11-12px / 辅助文字色&#96;
+
+### 页面底色
+- 全局背景：&#96;#f4f6f9&#96;
+- 卡片始终为白色，搭配柔和阴影
+- 全页不允许出现纯黑文字——最深色为 &#96;#1e2a36&#96;
+
+---
+
+## 2. 布局与导航系统
+
+### 整页滑动模型
+- 全视口滑动：&#96;position: absolute; inset: 0; opacity: 0/1 过渡&#96;
+- 当前激活页：&#96;opacity: 1; pointer-events: auto; z-index: 2&#96;
+- 内容最大宽度：&#96;1200px&#96;（全景页为 &#96;1060px&#96;），居中显示
+- 顶部进度条：&#96;4px&#96; 高，渐变色 &#96;深蓝 → 金色&#96;，随翻页推进
+
+### 右侧侧边导航
+&#96;&#96;&#96;
+固定定位：right: 12px; top: 50%; transform: translateY(-50%); z-index: 110
+项目之间的垂直间距：14px
+
+每个导航项：
+├── 标签（圆点左侧）：12px，辅助文字色，默认透明 → 激活/悬停 → 显示 + 向左滑入
+└── 圆形节点（右侧）：10px，边框色，圆角
+    └── 激活态：12px，深蓝填充，外发光 box-shadow: 0 0 0 3px rgba(15,43,70,0.2)
+&#96;&#96;&#96;
+
+### 底部分页条
+&#96;&#96;&#96;
+固定定位：bottom: 0；背景：白色 92% 不透明度 + 毛玻璃模糊
+圆点：28px × 3px，圆角，边框色
+激活态：42px 宽，深蓝填充
+圆点间距：6px
+&#96;&#96;&#96;
+
+### 上一页 / 下一页箭头
+&#96;&#96;&#96;
+固定定位，底部区域（bottom: 80px）
+36px 圆形按钮，白色背景，带边框和阴影
+左箭头：left: 24px
+右箭头：right: 56px（向右偏移，避免与侧边导航重叠）
+悬停态：深蓝背景，白色箭头
+&#96;&#96;&#96;
+
+### 键盘支持
+- &#96;→&#96; / &#96;↓&#96; → 下一页
+- &#96;←&#96; / &#96;↑&#96; → 上一页
+- &#96;Esc&#96; → 关闭右侧抽屉
+
+### 页码标签
+&#96;&#96;&#96;
+固定定位：bottom: 52px，居中
+格式："当前页 / 总页数"
+12px，辅助文字色
+&#96;&#96;&#96;
+
+---
+
+## 3. 右侧抽屉（全部下钻内容的统一容器）
+
+**关键要求**：所有可展开的详情内容必须通过右侧抽屉展示——**绝不用弹窗、弹出层或新页面**。
+
+### HTML 结构
+&#96;&#96;&#96;html
+&lt;!-- 遮罩层：点击关闭 --&gt;
+&lt;div class="drill-overlay" onclick="closeDrill()"&gt;&lt;/div&gt;
+
+&lt;!-- 抽屉面板：从右侧滑入 --&gt;
+&lt;div class="drill-panel"&gt;
+  &lt;button class="drill-close"&gt;✕&lt;/button&gt;
+  &lt;!-- JS 动态注入内容 --&gt;
+&lt;/div&gt;
+&#96;&#96;&#96;
+
+### CSS 规格
+&#96;&#96;&#96;
+遮罩层：fixed 全屏覆盖，rgba(0,0,0,0.4)，透明度 0→1 过渡
+面板：fixed，right: -520px → 0，宽度 460px，高度 100vh
+      白色背景，阴影：-4px 0 24px rgba(0,0,0,0.15)
+      过渡：right .35s cubic-bezier(.4,0,.2,1)
+      纵向滚动，内边距：32px 28px
+关闭按钮：34px 圆形按钮，右上角，带边框
+&#96;&#96;&#96;
+
+### 抽屉内容区块规范
+&#96;&#96;&#96;
+标题：20px，字重 700，深蓝色
+副标题：13px，次要文字色
+分区：
+  - h4 标签：12px，辅助文字色，大写，字间距加宽
+  - 正文：13px，行高 1.7
+能力列表项：
+  - 编号圆圈（22px，深蓝背景，白色数字）
+  - 文字紧贴编号右侧
+&#96;&#96;&#96;
+
+### 哪些内容用抽屉展示
+- 点击架构模块 → 展示该中心的完整能力列表
+- 点击角色卡片 → 展示角色详情（级别、人员、任务、入口、职责）
+- 点击旅程节点 → 展示系统做了什么 + 产出什么
+- 点击矩阵单元格 → 展示角色详情
+- 点击指标 → 展示计算口径
+- 任何标注"点击查看详情"的位置
+
+---
+
+## 4. 页面结构 —— 最少 5 页
+
+### 第 0 页：封面
+- 大号 emoji 图标（56px）
+- 标题：&#96;40px / 字重 800 / 深蓝色 / 字间距 1px&#96;
+- 副标题：&#96;17px / 次要文字色 / 字间距 2px&#96;
+- 垂直水平居中
+
+### 第 1 页：全景建设蓝图 —— **最重要的一页**
+
+这一页必须把完整故事讲清楚。包含以下四个必选区域，按顺序排列：
+
+#### 区域 A：当前面临的问题（为什么要建）
+布局：**痛点流转卡片** —— 横向卡片，用 &#96;→&#96; 箭头串联。
+
+每张卡片：
+&#96;&#96;&#96;
+┌──────────────────────┐
+│ ① （金色编号）       │
+│ 🏪 角色（辅助文字）  │
+│ 痛点描述（加粗）     │
+│ "期望"（灰色斜体）   │
+└──────────────────────┘
+&#96;&#96;&#96;
+
+后面紧跟：
+- **恶性循环**：彩色药丸标签，用 &#96;→&#96; 串联，末尾为红色加粗
+  - 药丸颜色：红 → 橙 → 黄 → 红 → 深红
+- **核心矛盾**：3 项并排，每项包含加粗标题 + 解释说明
+- **结论**：一句总结，居中显示，核心洞察用金色高亮
+
+#### 区域 B：解决方案总体蓝图（建什么）
+布局：**架构模块卡片** —— 一排可点击卡片。
+
+每张卡片：
+&#96;&#96;&#96;
+┌────────────────┐
+│  📋  图标       │
+│  标题           │（16px，加粗，深蓝）
+│  解决：xxx      │（11px，辅助文字）
+│  AI 做什么      │（12px，灰色背景）
+└────────────────┘
+悬停：上浮 3px，显示彩色边框 + 浅色背景
+点击 → 右侧抽屉展示完整能力列表
+&#96;&#96;&#96;
+
+卡片下方：连接符 &#96;▼&#96; + 统一底座卡片（更宽，居中）。
+
+#### 区域 C：角色体系（谁来做）
+布局：**角色卡片**，分两行排列。
+
+&#96;&#96;&#96;
+第一行：▼ 需求侧（提需求 · 造应用 · 确认价值）
+  [普通使用者] [业务创新者] [业务Owner]
+
+第二行：▼ 供给侧（建能力 · 守红线 · 管运营）
+  [总行科技] [安全合规] [平台运营] [管理者]
+&#96;&#96;&#96;
+
+每张卡片：顶部彩色边框，图标，名称，所属部门，一句话职责说明。
+点击 → 右侧抽屉展示完整角色详情（级别、人员、任务、入口、职责）。
+
+#### 区域 D：运行闭环（怎么跑起来）
+布局：**9 步旅程节点条** —— 横向节点，用 &#96;→&#96; 串联。
+
+每个节点：
+&#96;&#96;&#96;
+┌──────────┐
+│ 第 N 步   │（10px，辅助文字）
+│ 节点名称  │（12px，加粗，深蓝）
+└──────────┘
+&#96;&#96;&#96;
+
+9 个步骤（可视情况换行）：
+1. 需求提出 → 2. AI 分析 → 3. 能力匹配 → 4. 应用生成 → 5. 测试验证 → 6. 审核发布 → 7. 上线使用 → 8. 运营分析 → 9. 能力沉淀
+
+点击每个步骤 → 抽屉展示：系统做了什么 + 产出物是什么
+
+### 第 2 页：角色矩阵
+- 组织层级（行）× 角色（列）的交叉表
+- 集中式角色（总行科技、安全合规、平台运营）跨 3 行合并
+- 行标题：总行 / 分行 / 支行，各有不同背景色
+- 每个单元格：可点击，简要说明，带 &#96;›&#96; 指示符
+- 点击 → 抽屉展示完整角色详情
+
+### 第 3 页：分阶段建设路线
+- 3 张并排的时间线卡片
+- 第一阶段：金色边框高亮
+- 第二阶段
+- 第三阶段
+- 每张卡片：阶段编号、标题、目标、要点列表、验收标准框
+
+### 第 4 页：一期实施计划
+- 双列网格布局：
+  - 交付内容
+  - 运营策略
+- 全宽卡片：**北极星指标** —— 深蓝底色，白色文字
+- 全宽卡片：**五维上线标准** —— 5 个指标卡片并排
+- 全宽金色卡片：**扩围门槛** —— 5 个准入条件（药丸标签）
+- 底部：**两个关键闭环** —— 并排紧凑循环图
+  - 能力缺口闭环
+  - 应用生命周期闭环
+- 结尾备注：金色背景，原型引用
+
+---
+
+## 5. 内容质量红线
+
+### 绝对不能做：
+- ❌ 脱离场景堆砌功能
+- ❌ 列能力但不说明每项解决什么问题
+- ❌ 跳过"为什么"——每个模块都必须回答"解决什么问题"
+- ❌ 用"功能模块""系统架构"这类空泛标题
+- ❌ 把"当前问题"和"解决方案"拆到不同页面——它们必须在全景蓝图这一页中同时呈现
+
+### 必须做到：
+- ✅ 每个架构模块：&#96;图标 + 标题 + 解决：xxx + AI 如何实现&#96;
+- ✅ 每个角色：&#96;谁 + 解决什么问题 + 做什么 + 承担什么职责&#96;
+- ✅ 每个阶段：&#96;目标 + 交付物 + 验收标准&#96;
+- ✅ 每个旅程节点：&#96;发生什么 + 产出什么&#96;
+- ✅ 用具体例子（例如"客户经理拜访管理"代替"业务场景"）
+- ✅ 关键数字和结论用金色高亮（&#96;class="highlight"&#96;）
+
+---
+
+## 6. 落地检查清单
+
+生成 HTML 文件时，逐项确认：
+
+- [ ] 单个自包含文件：CSS 写在 &#96;&lt;style&gt;&#96; 里，JS 写在 &#96;&lt;script&gt;&#96; 里
+- [ ] 5 页全部就位（封面 → 全景蓝图 → 角色矩阵 → 分阶段路线 → 一期实施）
+- [ ] 右侧导航：圆点可点击，带标签，当前页高亮
+- [ ] 底部分页条：可点击切换，激活态加宽
+- [ ] 上下翻页箭头：可点击，键盘也支持
+- [ ] 右侧抽屉：遮罩层 + 抽屉面板，所有可点击元素均已连线
+- [ ] 全景页：4 个区域完整（痛点 → 架构 → 角色 → 旅程）
+- [ ] 配色体系：深蓝 + 金色为主，功能色辅助分类
+- [ ] 响应式：1024px 和 640px 两个断点
+- [ ] 页码标签显示"当前页 / 总页数"
+- [ ] 顶部进度条随翻页推进
+- [ ] 所有交互元素过渡动画流畅
+- [ ] 输出文件到 &#96;/Users/han/Documents/hn/&#96;
+
+## 7. 响应式断点
+
+&#96;&#96;&#96;css
+@media (max-width: 1024px) {
+  - 减小内边距
+  - 时间线 → 纵向排列
+  - 抽屉 → 全宽
+  - 侧边导航圆点缩小
+}
+@media (max-width: 640px) {
+  - 隐藏翻页箭头
+  - 痛点流程 → 纵向排列
+  - 架构模块 → 纵向排列
+  - 角色地图 → 纵向排列
+  - 封面标题 → 22px
+}
+&#96;&#96;&#96;
+
+---
+
+## 参考资料
+
+标准实现参考文件：&#96;/Users/han/Desktop/泰隆银行AI应用创新平台_蓝图方案.html&#96;。任何视觉或交互细节有疑问时，以该文件为准。
+</code></pre>
+    </div>
+
+    <div style="margin-top:12px;font-size:11px;color:var(--text-muted);text-align:center">
+      💡 提示：上面 8 张卡片是给人看的框架说明，下面是给 AI 看的完整 Skill 规范。两者结合使用效果最佳。
+    </div>
+  </div>`
+];
+
+// ============ INIT ============
+let current = 0;
+
+function init(){
+  // Build slides
+  const app = document.getElementById('app');
+  slidesHTML.forEach((html, i) => {
+    const div = document.createElement('div');
+    div.className = 'slide';
+    div.setAttribute('data-index', i);
+    div.innerHTML = html;
+    app.appendChild(div);
+  });
+
+  buildSideNav();
+  buildDots();
+  goTo(0);
+
+  document.addEventListener('keydown', e => {
+    if(e.key === 'ArrowRight' || e.key === 'ArrowDown'){ e.preventDefault(); nextSlide(); }
+    if(e.key === 'ArrowLeft' || e.key === 'ArrowUp'){ e.preventDefault(); prevSlide(); }
+    if(e.key === 'Escape') closeDrill();
+  });
+}
+
+function buildSideNav(){
+  const sn = document.getElementById('sideNav');
+  sn.innerHTML = sideLabels.map((l, i) => `
+    <div class="side-nav-item" onclick="goTo(${i})" title="${l.replace(/\n/g,' ')}">
+      <span class="side-nav-label">${l.replace(/\n/g,'<br>')}</span>
+      <span class="side-nav-dot"></span>
+    </div>
+  `).join('');
+}
+
+function buildDots(){
+  const nb = document.getElementById('navBottom');
+  for(let i = 0; i < TOTAL; i++){
+    const d = document.createElement('button');
+    d.className = 'nav-dot';
+    d.title = `第${i+1}页`;
+    d.onclick = () => goTo(i);
+    nb.appendChild(d);
+  }
+}
+
+function goTo(i){
+  current = Math.max(0, Math.min(TOTAL - 1, i));
+  document.querySelectorAll('.slide').forEach((s, idx) => s.classList.toggle('active', idx === current));
+  document.querySelectorAll('.nav-dot').forEach((d, idx) => d.classList.toggle('active', idx === current));
+  document.querySelectorAll('.side-nav-item').forEach((d, idx) => d.classList.toggle('active', idx === current));
+  document.getElementById('topbarFill').style.width = ((current + 1) / TOTAL * 100) + '%';
+  document.getElementById('navLabel').textContent = `${current + 1} / ${TOTAL}`;
+  const activeSlide = document.querySelector('.slide.active');
+  if(activeSlide) activeSlide.scrollTo(0, 0);
+}
+
+function nextSlide(){ if(current < TOTAL - 1) goTo(current + 1); }
+function prevSlide(){ if(current > 0) goTo(current - 1); }
+
+// ============ DRILL ============
+function openDrillPanel(){
+  document.getElementById('drillOverlay').classList.add('open');
+  document.getElementById('drillPanel').classList.add('open');
+  document.getElementById('drillPanel').scrollTo(0, 0);
+}
+function closeDrill(){
+  document.getElementById('drillOverlay').classList.remove('open');
+  document.getElementById('drillPanel').classList.remove('open');
+}
+
+// ============ COPY CODE ============
+function copyCode(btn, codeId){
+  const el = document.getElementById('code-' + codeId);
+  if(!el) return;
+  const text = el.textContent || el.innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = '✓ 已复制';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = '📋 复制'; btn.classList.remove('copied'); }, 1800);
+  }).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.left = '-9999px';
+    document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+    btn.textContent = '✓ 已复制';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = '📋 复制'; btn.classList.remove('copied'); }, 1800);
+  });
+}
+
+// ============ CHECKLIST TOGGLE ============
+function toggleCheck(el){ el.classList.toggle('checked'); }
+
+// ============ START ============
+init();
+</script>
+</body>
+</html>

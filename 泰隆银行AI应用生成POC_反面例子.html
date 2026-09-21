@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>泰隆银行 · AI 应用生成 POC 效果验证</title>
+<style>
+/* ============================================================
+   泰隆银行 · AI 应用生成 POC 效果验证 — 精简版（6页）
+   故事线：场景 → 首次生成效果 → 目标成品 → 结论
+   亮色系 · 深蓝+金色 | 单文件自包含
+   【留白标记】预览效果/提示词待填充
+   ============================================================ */
+:root{
+  --bg:#F3F6FB;
+  --bg-deep:#E9EEF6;
+  --panel:rgba(255,255,255,.72);
+  --panel-2:rgba(255,255,255,.9);
+  --border:rgba(23,38,66,.10);
+  --border-gold:rgba(176,140,45,.42);
+  --gold:#B8891F;
+  --gold-soft:#8A6A14;
+  --gold-deep:#6F520C;
+  --ink:#1B2A44;
+  --ink-dim:#4E5E79;
+  --ink-faint:#7D8CA6;
+  --blue:#2E63A8;
+  --shadow:0 18px 46px rgba(18,35,66,.14);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  background:
+    radial-gradient(1100px 520px at 84% -10%, rgba(184,137,31,.13), transparent 60%),
+    radial-gradient(900px 520px at -8% 110%, rgba(46,99,168,.12), transparent 55%),
+    linear-gradient(180deg,var(--bg-deep),var(--bg) 45%,#E6ECF5);
+  color:var(--ink);
+  overflow:hidden;
+}
+body::before{
+  content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:linear-gradient(rgba(27,42,68,.05) 1px,transparent 1px),
+                   linear-gradient(90deg,rgba(27,42,68,.05) 1px,transparent 1px);
+  background-size:56px 56px;
+  mask-image:radial-gradient(ellipse at 50% 40%,#000 30%,transparent 75%);
+}
+
+/* ================= 顶栏 ================= */
+.topbar{
+  position:fixed;top:0;left:0;right:0;height:58px;z-index:50;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 26px;
+  background:linear-gradient(180deg,rgba(233,238,246,.94),rgba(233,238,246,0));
+}
+.brand{display:flex;align-items:center;gap:12px;font-size:14px;letter-spacing:1px}
+.brand .dot{width:10px;height:10px;border-radius:50%;background:var(--gold);box-shadow:0 0 14px rgba(184,137,31,.6)}
+.brand b{font-weight:800;color:var(--ink)}
+.brand span{color:var(--ink-dim);font-weight:400}
+
+/* ================= 幻灯片 ================= */
+.slides{position:relative;height:100%;z-index:1}
+.slide{
+  position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;
+  opacity:0;visibility:hidden;transform:translateY(16px);
+  transition:opacity .5s ease,transform .5s ease,visibility .5s;
+}
+.slide.active{opacity:1;visibility:visible;transform:none}
+.slide-inner{max-width:1160px;margin:0 auto;padding:100px 120px 84px 64px;min-height:100%}
+
+.slide-kicker{display:flex;align-items:center;gap:14px;margin-bottom:14px}
+.slide-num{
+  font-size:12px;letter-spacing:2px;color:var(--gold);font-weight:800;
+  border:1px solid var(--border-gold);padding:5px 13px;border-radius:999px;
+  background:rgba(184,137,31,.08);
+}
+.slide-title{font-size:30px;font-weight:800;letter-spacing:1px;line-height:1.3}
+.slide-title em{color:var(--gold);font-style:normal}
+.title-line{width:64px;height:3px;background:linear-gradient(90deg,var(--gold),transparent);border-radius:2px;margin:16px 0 30px}
+
+/* ================= 卡片/标签/按钮 ================= */
+.grid{display:grid;gap:18px}
+.g2{grid-template-columns:1fr 1fr}
+.card{
+  background:var(--panel);border:1px solid var(--border);border-radius:16px;
+  padding:26px;transition:.25s;position:relative;
+}
+.card:hover{border-color:var(--border-gold);transform:translateY(-3px);box-shadow:var(--shadow)}
+.card .c-title{font-size:16px;font-weight:800;margin-bottom:16px;display:flex;align-items:center;gap:10px}
+.card .c-title .gold{color:var(--gold)}
+.tag{
+  display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;
+  padding:4px 12px;border-radius:999px;border:1px solid var(--border-gold);
+  color:var(--gold-soft);background:rgba(184,137,31,.08);letter-spacing:.5px;white-space:nowrap;
+}
+.tag.blue{border-color:rgba(46,99,168,.4);color:#1E5598;background:rgba(46,99,168,.07)}
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  font-size:13.5px;font-weight:700;padding:11px 20px;border-radius:11px;
+  border:1px solid var(--border);background:var(--panel-2);color:var(--ink);
+  cursor:pointer;transition:.2s;letter-spacing:.5px;font-family:inherit;
+}
+.btn:hover{border-color:var(--border-gold);color:var(--gold-soft)}
+.btn.gold{background:linear-gradient(135deg,var(--gold),#A07C1C);color:#fff;border:none;box-shadow:0 8px 24px rgba(184,137,31,.28)}
+.btn.gold:hover{transform:translateY(-2px);color:#fff}
+
+/* ================= Tabs ================= */
+.tabs{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap}
+.tab-btn{
+  font-size:13px;font-weight:700;padding:9px 20px;border-radius:10px;
+  border:1px solid var(--border);background:var(--panel-2);color:var(--ink-dim);
+  cursor:pointer;transition:.2s;font-family:inherit;letter-spacing:.5px;
+}
+.tab-btn:hover{color:var(--ink);border-color:var(--border-gold)}
+.tab-btn.on{background:var(--gold);color:#fff;border-color:var(--gold);box-shadow:0 6px 18px rgba(184,137,31,.28)}
+.tab-panel{display:none;animation:fadeIn .4s ease}
+.tab-panel.on{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* ================= 提示词抽屉 ================= */
+.overlay{
+  position:fixed;inset:0;background:rgba(26,40,70,.32);z-index:55;
+  opacity:0;visibility:hidden;transition:.3s;
+}
+.overlay.open{opacity:1;visibility:visible}
+.drawer{
+  position:fixed;top:0;right:0;bottom:0;width:460px;z-index:60;
+  background:#fff;border-left:1px solid var(--border-gold);
+  transform:translateX(100%);transition:transform .35s ease;
+  overflow-y:auto;padding:40px 34px;box-shadow:-24px 0 70px rgba(18,35,66,.2);
+}
+.drawer.open{transform:none}
+.d-close{
+  position:absolute;top:18px;right:20px;width:34px;height:34px;border-radius:50%;
+  border:1px solid var(--border);background:var(--panel-2);color:var(--ink-dim);
+  font-size:15px;cursor:pointer;transition:.2s;font-family:inherit;
+}
+.d-close:hover{border-color:var(--border-gold);color:var(--gold-soft)}
+.d-title{font-size:20px;font-weight:800;margin-bottom:10px;line-height:1.4;padding-right:40px}
+.d-lead{font-size:12.5px;color:var(--ink-faint);letter-spacing:.5px;margin-bottom:20px;line-height:1.7}
+.prompt-box{
+  background:#F4F6FA;border:1px solid var(--border);border-radius:12px;
+  padding:18px;font-family:"SF Mono",Menlo,Consolas,monospace;font-size:12.5px;
+  line-height:1.9;color:var(--ink);white-space:pre-wrap;word-break:break-word;min-height:200px;
+}
+.copy-btn{width:100%;margin-top:18px}
+
+/* ================= 留白占位 ================= */
+.ph{
+  border:1.5px dashed var(--border-gold);border-radius:14px;
+  background:rgba(184,137,31,.05);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
+  color:var(--ink-faint);text-align:center;padding:24px 18px;min-height:120px;
+}
+.ph .ph-icon{font-size:24px;opacity:.8}
+.ph .ph-title{color:var(--gold-soft);font-weight:800;font-size:13.5px;letter-spacing:1px}
+.ph .ph-note{font-size:11.5px;line-height:1.7;max-width:520px}
+.ph.tall{min-height:260px}
+
+/* ================= 业务场景页 ================= */
+.scen-card .row{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.scen-num{font-size:13px;letter-spacing:2px;color:var(--gold);font-weight:800}
+.scen-req{font-size:24px;font-weight:800;line-height:1.6;letter-spacing:.5px}
+
+/* ================= 行业效果页 ================= */
+.prompt-strip{
+  display:flex;align-items:center;gap:12px;padding:13px 18px;border-radius:12px;
+  background:var(--panel-2);border:1px solid var(--border);font-size:15px;color:var(--ink);
+  margin-bottom:22px;font-weight:600;
+}
+.prompt-strip .pl{font-size:12px;color:var(--gold-soft);font-weight:800;letter-spacing:1px;white-space:nowrap}
+.ind-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+.tool-name{display:flex;align-items:center;gap:10px;font-size:16px;font-weight:800;margin-bottom:12px}
+.tool-name .logo{
+  width:24px;height:24px;border-radius:7px;color:#fff;
+  display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;
+}
+.logo.l{background:#FF5A3C}
+.logo.w{background:#2E63A8}
+
+/* ===== WorkBuddy 双版本切换 ===== */
+.ver-switch{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.ver-btn{
+  font-size:12.5px;font-weight:700;padding:7px 14px;border-radius:999px;
+  border:1px solid var(--border);background:var(--panel-2);color:var(--ink-dim);
+  cursor:pointer;transition:.2s;font-family:inherit;
+}
+.ver-btn:hover{border-color:var(--border-gold);color:var(--gold-soft)}
+.ver-btn.on{background:var(--gold);color:#fff;border-color:var(--gold)}
+.ver-arrow{color:var(--gold);font-size:16px;font-weight:900}
+.ver-stage{
+  border:1px solid var(--border);border-radius:12px;overflow:hidden;
+  background:#fff;height:420px;position:relative;
+}
+.ver-stage iframe{width:100%;height:100%;border:0;display:block}
+.ver-stage.mini{height:700px}
+/* Lovable 截图并排（同一页面拆两张） */
+.lv-split{
+  display:flex;gap:10px;align-items:stretch;justify-content:center;
+  border:1px solid var(--border);border-radius:12px;overflow:hidden;
+  background:linear-gradient(180deg,#F7F9FE,#EDF1F9);
+  padding:14px;height:500px;
+}
+.lv-split .lv-col{
+  flex:1;min-width:0;display:flex;align-items:center;justify-content:center;
+  background:#fff;border-radius:8px;overflow:hidden;text-decoration:none;
+}
+.lv-split img{
+  max-width:100%;max-height:100%;width:auto;height:auto;display:block;
+  object-fit:contain;border-radius:2px;box-shadow:0 6px 18px rgba(27,42,68,.14);
+  transition:transform .2s;
+}
+.lv-split .lv-col:hover img{transform:scale(1.02)}
+.ver-caption{font-size:12px;color:var(--ink-faint);text-align:center;margin:12px 0;line-height:1.7}
+.ver-caption b{color:var(--gold-soft)}
+
+/* ================= 需求分析页 ================= */
+.req-card{margin-bottom:18px}
+.req-card .c-title{margin-bottom:12px}
+.req-tbl{width:100%;border-collapse:collapse;font-size:13.5px}
+.req-tbl th,.req-tbl td{padding:11px 14px;text-align:left;border-bottom:1px solid var(--border)}
+.req-tbl th{color:var(--gold-soft);font-weight:700;font-size:12px;letter-spacing:1px;background:rgba(184,137,31,.06)}
+.req-tbl th:first-child{width:15%}
+.req-tbl th:nth-child(2){width:22%}
+.req-tbl td:first-child{color:var(--ink);font-weight:700;white-space:nowrap}
+.req-tbl td:nth-child(2){color:var(--ink-faint)}
+.req-tbl td:last-child{color:var(--ink-dim)}
+.req-tbl tr:last-child td{border-bottom:none}
+.req-tag-row{display:flex;align-items:center;gap:10px}
+.req-tag-row .tag{margin-left:auto}
+
+/* ================= 清单列表 ================= */
+.flist{list-style:none;margin-top:6px}
+.flist .f-group{margin-bottom:16px}
+.flist .f-group:last-child{margin-bottom:0}
+.fg-name{font-size:13px;font-weight:800;color:var(--gold-soft);letter-spacing:1px;margin-bottom:6px}
+.fg-item{font-size:13.5px;color:var(--ink-dim);line-height:1.9}
+.fg-item b{color:var(--ink);font-weight:700;margin-right:4px}
+
+/* ================= 成品页 ================= */
+.scen{margin-bottom:26px}
+.scen:last-child{margin-bottom:0}
+.scen-head{display:flex;align-items:center;gap:14px}
+.scen-title{font-size:20px;font-weight:800}
+.scen-req{margin-top:10px;font-size:13.5px;color:var(--ink-dim)}
+.scen-req b{color:var(--ink);font-weight:700}
+.scen-flow{display:grid;grid-template-columns:1fr 86px 1.15fr;gap:16px;align-items:stretch;margin-top:16px}
+.gen-box{display:flex;flex-direction:column;gap:10px}
+.gen-label{font-size:12px;letter-spacing:1.5px;color:var(--ink-faint);font-weight:800}
+.gen-label b{color:var(--gold-soft)}
+.gen-box .ph{flex:1;min-height:150px}
+.gen-box .ph.tall{min-height:240px}
+.gen-arrow{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}
+.gen-arrow .ar{color:var(--gold);font-size:30px;font-weight:900;line-height:1}
+.gen-arrow .al{font-size:11.5px;color:var(--ink-faint);text-align:center;line-height:1.6;letter-spacing:.5px}
+
+/* ================= 勾选清单 ================= */
+.checks{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.check{
+  display:flex;gap:14px;align-items:flex-start;background:var(--panel);
+  border:1px solid var(--border);border-radius:13px;padding:18px 18px;
+}
+.check .box{
+  flex:0 0 auto;width:24px;height:24px;border-radius:7px;margin-top:1px;
+  background:var(--gold);color:#fff;display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:900;
+}
+.check .t{display:flex;align-items:center;flex-wrap:wrap;gap:8px;font-size:15px;font-weight:700;color:var(--ink)}
+.check .d{font-size:12.5px;color:var(--ink-faint);margin-top:4px;line-height:1.6}
+.check .st{font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px;line-height:1.6;white-space:nowrap}
+.check .st.ver{background:#E7F2E4;color:#2E7D32}
+.check .st.tbd{background:#E8EEF9;color:#2E63A8}
+.closing{margin-top:40px;text-align:center;color:var(--ink-faint);font-size:14px;line-height:1.9}
+.closing b{color:var(--gold-soft)}
+
+/* ================= 封面 ================= */
+.cover-box{text-align:center;padding-top:15vh}
+.cover-title{font-size:48px;font-weight:900;letter-spacing:3px;line-height:1.45}
+.cover-title em{color:var(--gold);font-style:normal}
+.cover-line{width:60px;height:3px;background:linear-gradient(90deg,transparent,var(--gold),transparent);border-radius:2px;margin:28px auto 0}
+
+/* ================= 右侧导航 ================= */
+.sidenav{
+  position:fixed;right:20px;top:50%;transform:translateY(-50%);
+  display:flex;flex-direction:column;gap:11px;z-index:40;
+}
+.sdot{
+  position:relative;width:34px;height:34px;border-radius:50%;
+  border:1px solid var(--border);background:rgba(255,255,255,.82);backdrop-filter:blur(6px);
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:800;color:var(--ink-dim);cursor:pointer;transition:.22s;
+}
+.sdot:hover{border-color:var(--border-gold);color:var(--gold-soft)}
+.sdot.on{background:var(--gold);border-color:var(--gold);color:#fff;box-shadow:0 0 16px rgba(184,137,31,.5)}
+.sdot::after{
+  content:attr(data-label);position:absolute;right:46px;top:50%;transform:translateY(-50%);
+  font-size:11.5px;color:var(--ink-dim);white-space:nowrap;letter-spacing:.5px;
+  background:rgba(255,255,255,.95);border:1px solid var(--border);padding:4px 10px;border-radius:8px;
+  opacity:0;pointer-events:none;transition:.2s;
+}
+.sdot:hover::after{opacity:1}
+
+/* ================= 底部控制 ================= */
+.ctl{
+  position:fixed;left:50%;transform:translateX(-50%);bottom:16px;z-index:40;
+  display:flex;align-items:center;gap:14px;
+  background:rgba(255,255,255,.86);backdrop-filter:blur(8px);
+  border:1px solid var(--border);border-radius:999px;padding:7px 12px;
+}
+.ctl button{
+  width:34px;height:34px;border-radius:50%;border:1px solid var(--border);
+  background:transparent;color:var(--ink-dim);cursor:pointer;transition:.2s;
+  font-size:15px;display:flex;align-items:center;justify-content:center;font-family:inherit;
+}
+.ctl button:hover{border-color:var(--border-gold);color:var(--gold-soft)}
+.ctl .pageno{font-size:12px;color:var(--ink-dim);letter-spacing:2px;min-width:64px;text-align:center}
+.ctl .pageno b{color:var(--gold);font-size:14px}
+
+/* ================= Toast ================= */
+.toast{
+  position:fixed;left:50%;bottom:80px;transform:translateX(-50%) translateY(20px);
+  background:rgba(255,255,255,.97);border:1px solid var(--border-gold);color:var(--ink);
+  padding:11px 22px;border-radius:11px;font-size:13px;letter-spacing:.5px;
+  opacity:0;pointer-events:none;transition:.3s;z-index:80;box-shadow:var(--shadow);
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ================= 第 3 页 · 能力差异入口（Lovable vs WorkBuddy） ================= */
+.our-gen{
+  margin-top:24px;border-top:1px dashed var(--border-gold);padding-top:16px;
+}
+.our-gen-head{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.our-gen-title{font-size:15.5px;font-weight:800;letter-spacing:.5px;color:var(--ink)}
+.our-gen-title b{color:var(--gold-soft)}
+
+/* 需求分析按钮（第 5 页 · 首次生成 → 成品之间） */
+.req-btn{
+  font-size:11.5px;font-weight:800;padding:6px 12px;border-radius:999px;
+  border:1px solid var(--gold);color:var(--gold-soft);background:rgba(184,137,31,.08);
+  cursor:pointer;transition:.2s;font-family:inherit;white-space:nowrap;letter-spacing:.5px;
+}
+.req-btn:hover{background:var(--gold);color:#fff}
+
+/* ================= 第 5 页 · 需求分析抽屉（3 Tab） ================= */
+#reqDrawer .tabs{margin-bottom:16px}
+#reqDrawer .tab-btn{font-size:12.5px;padding:8px 14px}
+.req-qa{
+  font-size:12.5px;line-height:1.7;color:var(--ink-dim);
+  background:rgba(184,137,31,.06);border:1px dashed var(--border-gold);
+  border-radius:10px;padding:10px 14px;margin-bottom:16px;
+}
+.req-qa b{color:var(--gold-soft)}
+#reqDrawer .req-tbl th:first-child{width:24%}
+#reqDrawer .req-tbl th:nth-child(2){width:auto}
+#reqDrawer .req-tbl td:nth-child(2){color:var(--ink-dim)}
+
+/* ================= 第 5 页 · AI 首次生成（列表 + 详情两页截图） ================= */
+.fg-split{
+  display:flex;gap:10px;align-items:stretch;
+  border:1px solid var(--border);border-radius:12px;overflow:hidden;
+  background:linear-gradient(180deg,#F7F9FE,#EDF1F9);
+  padding:10px;height:300px;
+}
+.fg-split .fg-item{
+  flex:1;min-width:0;display:flex;align-items:center;justify-content:center;position:relative;
+  background:#fff;border-radius:8px;overflow:hidden;text-decoration:none;
+}
+.fg-split img{
+  max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;
+  border-radius:2px;box-shadow:0 6px 18px rgba(27,42,68,.14);
+}
+.fg-tag{
+  position:absolute;left:8px;top:8px;font-size:10.5px;font-weight:800;letter-spacing:1px;
+  background:rgba(27,42,68,.72);color:#fff;padding:3px 8px;border-radius:999px;
+}
+
+/* ================= 差异对比抽屉（Lovable vs WorkBuddy） ================= */
+.diff-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.diff-col{
+  border:1px solid var(--border);border-radius:12px;padding:16px;background:#FBFCFE;
+}
+.diff-name{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:800;margin-bottom:12px}
+.diff-col ul{list-style:none;margin:0;padding:0}
+.diff-col li{
+  font-size:13px;color:var(--ink-dim);line-height:1.75;padding-left:16px;position:relative;
+}
+.diff-col li::before{content:"";position:absolute;left:0;top:8px;width:5px;height:5px;border-radius:50%;background:var(--gold)}
+.diff-note{
+  margin-top:16px;font-size:12.5px;color:var(--ink-faint);line-height:1.8;
+  border-top:1px dashed var(--border-gold);padding-top:14px;
+}
+.diff-note b{color:var(--gold-soft)}
+
+/* ================= 响应式 ================= */
+@media (max-width:1000px){
+  .slide-inner{padding:86px 70px 80px 34px}
+  .g2,.ind-grid,.checks{grid-template-columns:1fr}
+  .cover-title{font-size:36px}
+  .scen-flow{grid-template-columns:1fr}
+  .gen-arrow{flex-direction:row}
+}
+@media (max-width:640px){
+  .slide-inner{padding:80px 24px 70px 24px}
+  .sidenav{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- ======================= 顶栏 ======================= -->
+<header class="topbar">
+  <div class="brand"><span class="dot"></span><b>泰隆银行</b><span>· AI 应用生成 POC 效果验证</span></div>
+</header>
+
+<!-- ======================= 幻灯片容器 ======================= -->
+<main class="slides">
+
+  <!-- ═══════════ 01 封面 ═══════════ -->
+  <section class="slide" data-label="封面">
+    <div class="slide-inner cover-box">
+      <div class="cover-title">泰隆银行<br>AI 应用生成 <em>POC 效果验证</em></div>
+      <div class="cover-line"></div>
+    </div>
+  </section>
+
+  <!-- ═══════════ 02 两个业务场景 ═══════════ -->
+  <section class="slide" data-label="业务场景">
+    <div class="slide-inner">
+      <div class="slide-kicker"><span class="slide-num">01</span></div>
+      <h2 class="slide-title">客户提出的<em>两个业务场景</em></h2>
+      <div class="title-line"></div>
+
+      <div class="grid g2">
+        <div class="card scen-card">
+          <div class="row"><span class="scen-num">场景一</span><span class="tag">展示型应用</span></div>
+          <div class="scen-req">搭建一个历史营销活动展板。</div>
+        </div>
+        <div class="card scen-card">
+          <div class="row"><span class="scen-num">场景二</span><span class="tag blue">管理型应用</span></div>
+          <div class="scen-req">搭建一个活动报名看板，报名数据等维护在后台。</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ 03 首次生成效果（行业对照） ═══════════ -->
+  <section class="slide" data-label="首次生成效果">
+    <div class="slide-inner">
+      <div class="slide-kicker"><span class="slide-num">02</span></div>
+      <h2 class="slide-title">同一句话 · 不同 AI 工具生成</h2>
+      <div class="title-line"></div>
+
+      <div class="tabs" data-tabs>
+        <button class="tab-btn on" data-tab="ind-a">场景一 · 历史营销活动展板</button>
+        <button class="tab-btn" data-tab="ind-b">场景二 · 活动报名看板</button>
+      </div>
+
+      <!-- 场景一 -->
+      <div class="tab-panel on" id="ind-a">
+        <div class="prompt-strip"><span class="pl">统一 Prompt</span>搭建一个历史营销活动展板。</div>
+        <div class="ind-grid">
+          <div class="card">
+            <div class="tool-name"><span class="logo l">L</span>Lovable</div>
+            <!-- 同一页面一屏拆为两张截图，并排展示 -->
+            <div class="lv-split">
+              <a class="lv-col" href="lovable-历史营销活动1.png" target="_blank" title="查看原图 · 截图 1/2">
+                <img src="lovable-历史营销活动1.png" alt="Lovable · 历史营销活动展板（截图 1/2）" loading="lazy">
+              </a>
+              <a class="lv-col" href="lovable-历史营销活动2.png" target="_blank" title="查看原图 · 截图 2/2">
+                <img src="lovable-历史营销活动2.png" alt="Lovable · 历史营销活动展板（截图 2/2）" loading="lazy">
+              </a>
+            </div>
+            <div class="ver-caption">Lovable 可生成<b>多端</b>（Web / 小程序等），平台内手动切换预览；同一页面一屏展示不下，拆为<b>两张截图</b>并排展示，点击单张可看原图</div>
+            <button class="btn gold" style="width:100%" onclick="window.open('lovable-历史营销活动1.png','_blank');window.open('lovable-历史营销活动2.png','_blank')">打开完整效果</button>
+          </div>
+          <div class="card">
+            <div class="tool-name"><span class="logo w">W</span>WorkBuddy</div>
+            <!-- 双版本：一句话 Web 版 + 追加"生成小程序"版 -->
+            <div class="ver-switch" data-vswitch="wb1">
+              <button class="ver-btn on" data-file="workbuddy-历史营销活动看版-首次.html">① 一句话生成 · Web 版</button>
+              <span class="ver-arrow">→</span>
+              <button class="ver-btn" data-file="workbuddy-历史营销活动看版-小程序.html" data-mini="1">② 追加"生成小程序"</button>
+            </div>
+            <div class="ver-stage" data-stage="wb1">
+              <iframe src="workbuddy-历史营销活动看版-首次.html" loading="lazy"></iframe>
+            </div>
+            <div class="ver-caption">① 一句话直接生成 → 通用 Web 版；追加指令<b>「生成小程序」</b> → ② 小程序版</div>
+            <button class="btn gold" style="width:100%" data-open="wb1" data-file="workbuddy-历史营销活动看版-首次.html">打开完整效果</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 场景二 -->
+      <div class="tab-panel" id="ind-b">
+        <div class="prompt-strip"><span class="pl">统一 Prompt</span>搭建一个活动报名看板，报名数据等维护在后台。</div>
+        <div class="ind-grid">
+          <div class="card">
+            <div class="tool-name"><span class="logo l">L</span>Lovable</div>
+            <!-- ★ 留白：Lovable 生成结果预览（场景二） -->
+            <div class="ph tall">
+              <span class="ph-icon">🖥️</span>
+              <div class="ph-title">【预览留白】Lovable · 活动报名看板</div>
+              <div class="ph-note">待嵌入可交互 Demo 或截图 + 完整效果链接</div>
+            </div>
+            <button class="btn gold" style="width:100%;margin-top:14px" onclick="toast('待嵌入 Lovable · 场景二完整效果')">打开完整效果</button>
+          </div>
+          <div class="card">
+            <div class="tool-name"><span class="logo w">W</span>WorkBuddy</div>
+            <!-- ★ 留白：WorkBuddy 生成结果预览（场景二） -->
+            <div class="ph tall">
+              <span class="ph-icon">🖥️</span>
+              <div class="ph-title">【预览留白】WorkBuddy · 活动报名看板</div>
+              <div class="ph-note">待嵌入可交互 Demo 或截图 + 完整效果链接</div>
+            </div>
+            <button class="btn gold" style="width:100%;margin-top:14px" onclick="toast('待嵌入 WorkBuddy · 场景二完整效果')">打开完整效果</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 能力差异对比（Lovable vs WorkBuddy） -->
+      <div class="our-gen">
+        <div class="our-gen-head">
+          <div class="our-gen-title">Lovable / WorkBuddy · <b>已验证能力对照</b></div>
+          <button class="btn gold" onclick="openDiff()">查看能力差异</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ 04 目标成品 ═══════════ -->
+  <section class="slide" data-label="目标成品">
+    <div class="slide-inner">
+      <div class="slide-kicker"><span class="slide-num">03</span></div>
+      <h2 class="slide-title">我们的目标成品</h2>
+      <div class="title-line"></div>
+
+      <!-- 成品一 -->
+      <div class="scen">
+        <div class="scen-head">
+          <div class="scen-title">历史营销活动展板</div>
+          <span class="tag">展示型应用</span>
+        </div>
+        <div class="scen-req">原始需求：<b>搭建一个历史营销活动展板。</b></div>
+        <div class="scen-flow">
+          <div class="gen-box">
+            <div class="gen-label">AI 首次生成</div>
+            <!-- ★ 首次生成：我们的平台 · 列表页 + 详情页 -->
+            <div class="fg-split">
+              <a class="fg-item" href="我们的平台-历史营销活动列表.png" target="_blank" title="打开列表页原图">
+                <img src="我们的平台-历史营销活动列表.png" alt="AI 首次生成 · 历史营销活动列表页" loading="lazy">
+                <span class="fg-tag">列表页</span>
+              </a>
+              <a class="fg-item" href="我们的平台-历史营销活动详情.png" target="_blank" title="打开详情页原图">
+                <img src="我们的平台-历史营销活动详情.png" alt="AI 首次生成 · 历史营销活动详情页" loading="lazy">
+                <span class="fg-tag">详情页</span>
+              </a>
+            </div>
+          </div>
+          <div class="gen-arrow">
+            <div class="ar">→</div>
+            <div class="al">需求补全</div>
+            <button class="req-btn" onclick="openReq()">需求分析</button>
+          </div>
+          <div class="gen-box">
+            <div class="gen-label">最终生成 · <b>POC 目标成品</b></div>
+            <!-- ★ 留白：最终成品 Demo -->
+            <div class="ph tall">
+              <span class="ph-icon">🖼️</span>
+              <div class="ph-title">【成品留白】历史营销活动展板</div>
+              <div class="ph-note">待嵌入可操作 HTML：指标卡 + 活动卡片墙 + 筛选 + 详情</div>
+            </div>
+            <div style="display:flex;gap:10px;width:100%">
+              <button class="btn gold" style="flex:1" onclick="toast('待嵌入历史营销活动展板完整应用')">打开完整应用</button>
+              <button class="btn" onclick="openPrompt('s1')">查看提示词</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 成品二 -->
+      <div class="scen">
+        <div class="scen-head">
+          <div class="scen-title">活动报名看板</div>
+          <span class="tag blue">管理型应用</span>
+        </div>
+        <div class="scen-req">原始需求：<b>搭建一个活动报名看板，报名数据等维护在后台。</b></div>
+        <div class="scen-flow">
+          <div class="gen-box">
+            <div class="gen-label">AI 首次生成</div>
+            <!-- ★ 留白：首次生成预览 -->
+            <div class="ph">
+              <span class="ph-icon">🧩</span>
+              <div class="ph-title">【首次生成留白】</div>
+              <div class="ph-note">待嵌入 AI 直接生成的初版预览</div>
+            </div>
+          </div>
+          <div class="gen-arrow">
+            <div class="ar">→</div>
+            <div class="al">需求补全</div>
+            <button class="req-btn" onclick="openReq()">需求分析</button>
+          </div>
+          <div class="gen-box">
+            <div class="gen-label">最终生成 · <b>POC 目标成品</b></div>
+            <!-- ★ 留白：最终成品 Demo -->
+            <div class="ph tall">
+              <span class="ph-icon">📋</span>
+              <div class="ph-title">【成品留白】活动报名看板</div>
+              <div class="ph-note">待嵌入可操作 HTML：名单表格 + 状态统计 + 后台数据维护</div>
+            </div>
+            <div style="display:flex;gap:10px;width:100%">
+              <button class="btn gold" style="flex:1" onclick="toast('待嵌入活动报名看板完整应用')">打开完整应用</button>
+              <button class="btn" onclick="openPrompt('s2')">查看提示词</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ 05 POC 结论 ═══════════ -->
+  <section class="slide" data-label="验证结论">
+    <div class="slide-inner">
+      <div class="slide-kicker"><span class="slide-num">04</span></div>
+      <h2 class="slide-title">本轮 POC <em>重点验证</em></h2>
+      <div class="title-line"></div>
+
+      <div class="checks">
+        <div class="check">
+          <div class="box">1</div>
+          <div>
+            <div class="t">从自然语言到应用<span class="st ver">已验证</span></div>
+            <div class="d">验证业务人员可以从一句自然语言需求出发，由 AI 快速形成应用初稿。</div>
+          </div>
+        </div>
+        <div class="check">
+          <div class="box">2</div>
+          <div>
+            <div class="t">从模糊需求到目标效果<span class="st ver">已验证</span></div>
+            <div class="d">验证通过需求补全、功能拆解和自然语言调整，逐步让生成结果贴近实际业务预期。</div>
+          </div>
+        </div>
+        <div class="check">
+          <div class="box">3</div>
+          <div>
+            <div class="t">从页面生成到可操作应用<span class="st tbd">本轮重点验证</span></div>
+            <div class="d">验证生成结果支持搜索、筛选、详情跳转、数据维护等业务交互，两个场景共同验证。</div>
+          </div>
+        </div>
+        <div class="check">
+          <div class="box">4</div>
+          <div>
+            <div class="t">从一次生成到持续修改<span class="st tbd">本轮重点验证</span></div>
+            <div class="d">验证用户可基于生成结果继续用自然语言调整页面、内容和功能，而非一次生成后重新开发。</div>
+          </div>
+        </div>
+        <div class="check">
+          <div class="box">5</div>
+          <div>
+            <div class="t">为正式平台建设验证基础<span class="st tbd">本轮重点验证</span></div>
+            <div class="d">通过两个真实场景，识别平台需具备的需求理解、应用生成、组件组合、数据处理和 AI 修改等核心能力。</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="closing"><b>本轮 POC 重点验证 AI 应用生成链路和效果。</b>场景验证达到预期后，再结合泰隆实际业务规则、真实数据及行内能力，进一步推进正式平台建设。</div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ======================= 右侧导航 ======================= -->
+<nav class="sidenav" id="sidenav"></nav>
+
+<!-- ======================= 底部控制 ======================= -->
+<div class="ctl">
+  <button onclick="goTo(cur-1)">‹</button>
+  <div class="pageno"><b id="curPage">1</b> / <span id="totalPage">6</span></div>
+  <button onclick="goTo(cur+1)">›</button>
+</div>
+
+<!-- ======================= 提示词抽屉 ======================= -->
+<div class="overlay" id="overlay" onclick="closeAll()"></div>
+<aside class="drawer" id="drawer">
+  <button class="d-close" onclick="closeDrawer()">✕</button>
+  <div class="d-title" id="dTitle"></div>
+  <div class="d-lead">以下为生成该场景最终成品的完整提示词，可直接拷贝使用。</div>
+  <div class="prompt-box" id="dPrompt"></div>
+  <button class="btn gold copy-btn" onclick="copyPrompt()">复制提示词</button>
+</aside>
+
+<!-- ======================= 能力差异抽屉（Lovable vs WorkBuddy） ======================= -->
+<aside class="drawer" id="diffDrawer">
+  <button class="d-close" onclick="closeDiff()">✕</button>
+  <div class="d-title">Lovable vs WorkBuddy · 已验证能力</div>
+  <div class="d-lead">同一句「搭建一个历史营销活动展板」，两家行业工具各自证明过的能力边界：</div>
+  <div class="diff-grid">
+    <div class="diff-col">
+      <div class="diff-name"><span class="logo l">L</span>Lovable 已经证明</div>
+      <ul>
+        <li>根据自然语言形成完整视觉页面</li>
+        <li>自动组织信息层级</li>
+        <li>自动生成较成熟的UI风格</li>
+        <li>支持多端视觉预览</li>
+      </ul>
+    </div>
+    <div class="diff-col">
+      <div class="diff-name"><span class="logo w">W</span>WorkBuddy 已经证明</div>
+      <ul>
+        <li>多页面生成</li>
+        <li>搜索筛选</li>
+        <li>页面跳转</li>
+        <li>详情交互</li>
+        <li>数据展示</li>
+      </ul>
+    </div>
+  </div>
+  <div class="diff-note"><b>对比小结：</b>Lovable 强在「一句话直接成型的高完成度视觉 + 多端预览」，WorkBuddy 强在「业务功能完整性（多页 · 筛选 · 跳转 · 详情 · 数据）」。我们的平台目标 = 兼具两者：<b>视觉完成度</b> + <b>功能完整性</b>，同一句话直达可操作成品。</div>
+</aside>
+
+<!-- ======================= 需求分析抽屉（第 4 页 · 需求补全） ======================= -->
+<aside class="drawer" id="reqDrawer">
+  <button class="d-close" onclick="closeReq()">✕</button>
+  <div class="d-title">需求分析</div>
+  <div class="d-lead">用户只给一句话，平台先做「需求分析」把信息补全——明确目标、角色、页面、内容、交互与风格，再拆出业务功能清单，最后对齐需要具备的 AI 生成能力。这是「首次生成 → 成品」之间<b>需求补全</b>的第一轮。</div>
+  <div class="tabs" data-tabs>
+    <button class="tab-btn on" data-tab="req-desc">需求描述</button>
+    <button class="tab-btn" data-tab="req-func">业务功能清单</button>
+    <button class="tab-btn" data-tab="req-cap">AI生成能力清单</button>
+  </div>
+
+  <div class="tab-panel on" id="req-desc">
+    <div class="req-qa">Q：用户只说了「<b>搭建一个历史营销活动展板</b>」——这句话还需要补充什么信息？</div>
+    <table class="req-tbl">
+      <tr><th>补充维度</th><th>场景一 · 举例</th></tr>
+      <tr><td>应用目标</td><td>沉淀历年活动案例，用于回顾与复盘</td></tr>
+      <tr><td>使用角色</td><td>营销、运营、总分支行业务人员</td></tr>
+      <tr><td>页面结构</td><td>首页、活动列表、详情、数据概览</td></tr>
+      <tr><td>核心内容</td><td>活动信息、图片、参与情况、活动成果、复盘</td></tr>
+      <tr><td>操作交互</td><td>搜索、筛选、查看详情</td></tr>
+      <tr><td>风格要求</td><td>图片化、展示型、简洁专业、银行业务感</td></tr>
+    </table>
+  </div>
+
+  <div class="tab-panel" id="req-func">
+    <div class="req-qa">基于上面的需求分析，<b>我们最终认为这个应用应该有这些功能：</b></div>
+    <ul class="flist">
+      <li class="f-group">
+        <div class="fg-name">活动总览</div>
+        <div class="fg-item">历史活动总数 · 本年度活动数 · 累计参与人数 · 覆盖机构</div>
+      </li>
+      <li class="f-group">
+        <div class="fg-name">活动浏览</div>
+        <div class="fg-item">图片卡片 · 活动名称 · 类型 · 时间 · 举办机构 · 参与人数</div>
+      </li>
+      <li class="f-group">
+        <div class="fg-name">搜索筛选</div>
+        <div class="fg-item">按名称 · 年份 · 类型 · 机构</div>
+      </li>
+      <li class="f-group">
+        <div class="fg-name">活动详情</div>
+        <div class="fg-item">基础信息 · 活动介绍 · 现场图片 · 参与情况 · 活动成果 · 活动复盘</div>
+      </li>
+      <li class="f-group">
+        <div class="fg-name">数据概览</div>
+        <div class="fg-item">活动数量趋势 · 类型分布 · 机构分布 · 参与人数趋势</div>
+      </li>
+    </ul>
+  </div>
+
+  <div class="tab-panel" id="req-cap">
+    <div class="req-qa">要把上面的业务功能生成出来，<b>平台需要具备这些 AI 生成能力：</b></div>
+    <ul class="flist">
+      <li class="f-group">
+        <div class="fg-name">应用结构</div>
+        <div class="fg-item">Web / 移动端生成 · 多页面 · 导航 · Tab · 页面路由</div>
+      </li>
+      <li class="f-group">
+        <div class="fg-name">页面与组件</div>
+        <div class="fg-item">首页 · 卡片列表 · 详情 · 指标卡 · 搜索 · 筛选 · 图片 · 图表</div>
+      </li>
+      <li class="f-group">
+        <div class="fg-name">数据</div>
+        <div class="fg-item">Mock 数据 · 数据模型 · 查询 · 筛选 · 聚合统计</div>
+      </li>
+      <li class="f-group">
+        <div class="fg-name">交互</div>
+        <div class="fg-item">点击跳转 · 搜索 · 筛选 · Tab 切换 · 返回</div>
+      </li>
+      <li class="f-group">
+        <div class="fg-name">AI 调整</div>
+        <div class="fg-item">修改布局 · 增删模块 · 修改字段 · 修改风格 · 调整终端形态</div>
+      </li>
+    </ul>
+  </div>
+</aside>
+
+<!-- ======================= Toast ======================= -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* ---------- 幻灯片导航 ---------- */
+var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+var cur = 0;
+var sidenav = document.getElementById('sidenav');
+
+slides.forEach(function(s, i){
+  var d = document.createElement('div');
+  d.className = 'sdot' + (i===0?' on':'');
+  d.textContent = String(i+1).padStart(2,'0');
+  d.setAttribute('data-label', s.getAttribute('data-label'));
+  d.addEventListener('click', function(){ goTo(i); });
+  sidenav.appendChild(d);
+});
+var dots = Array.prototype.slice.call(sidenav.children);
+var totalPage = document.getElementById('totalPage');
+var curPage = document.getElementById('curPage');
+totalPage.textContent = String(slides.length).padStart(2,'0');
+
+function goTo(n){
+  if(n<0||n>=slides.length) return;
+  cur = n;
+  slides.forEach(function(s,i){
+    s.classList.toggle('active', i===n);
+    if(i===n) s.scrollTop = 0;
+  });
+  dots.forEach(function(d,i){ d.classList.toggle('on', i===n); });
+  curPage.textContent = String(n+1).padStart(2,'0');
+}
+document.addEventListener('keydown', function(e){
+  if(e.key==='ArrowRight'||e.key==='ArrowDown'||e.key==='PageDown'){ e.preventDefault(); goTo(cur+1); }
+  if(e.key==='ArrowLeft'||e.key==='ArrowUp'||e.key==='PageUp'){ e.preventDefault(); goTo(cur-1); }
+  if(e.key==='Home'){ goTo(0); }
+  if(e.key==='End'){ goTo(slides.length-1); }
+  if(e.key==='Escape'){ closeDrawer(); }
+});
+
+/* ---------- Tabs ---------- */
+document.querySelectorAll('[data-tabs]').forEach(function(group){
+  var btns = group.querySelectorAll('.tab-btn');
+  btns.forEach(function(btn){
+    btn.addEventListener('click', function(){
+      btns.forEach(function(b){ b.classList.remove('on'); });
+      btn.classList.add('on');
+      var target = btn.getAttribute('data-tab');
+      group.parentElement.querySelectorAll('.tab-panel').forEach(function(p){
+        p.classList.toggle('on', p.id === target);
+      });
+    });
+  });
+});
+
+/* ---------- 提示词抽屉 ---------- */
+var PROMPTS = {
+  s1:{
+    title:'历史营销活动展板 · 完整提示词',
+    text:'【留白】场景一完整提示词，待讨论后填充。'
+  },
+  s2:{
+    title:'活动报名看板 · 完整提示词',
+    text:'【留白】场景二完整提示词，待讨论后填充。'
+  }
+};
+var currentPrompt = '';
+function openPrompt(key){
+  currentPrompt = PROMPTS[key].text;
+  document.getElementById('dTitle').textContent = PROMPTS[key].title;
+  document.getElementById('dPrompt').textContent = currentPrompt;
+  document.getElementById('drawer').classList.add('open');
+  document.getElementById('overlay').classList.add('open');
+}
+function closeDrawer(){
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('overlay').classList.remove('open');
+}
+function openDiff(){
+  document.getElementById('diffDrawer').classList.add('open');
+  document.getElementById('overlay').classList.add('open');
+}
+function closeDiff(){
+  document.getElementById('diffDrawer').classList.remove('open');
+  document.getElementById('overlay').classList.remove('open');
+}
+function closeAll(){ closeDrawer(); closeDiff(); closeReq(); }
+function openReq(){
+  document.getElementById('reqDrawer').classList.add('open');
+  document.getElementById('overlay').classList.add('open');
+}
+function closeReq(){
+  document.getElementById('reqDrawer').classList.remove('open');
+  document.getElementById('overlay').classList.remove('open');
+}
+function copyPrompt(){
+  var txt = currentPrompt;
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(function(){ toast('提示词已复制'); })
+      .catch(function(){ fallbackCopy(txt); });
+  } else { fallbackCopy(txt); }
+}
+function fallbackCopy(txt){
+  var ta = document.createElement('textarea');
+  ta.value = txt; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  try{ document.execCommand('copy'); toast('提示词已复制'); }
+  catch(e){ toast('复制失败，请手动选择复制'); }
+  document.body.removeChild(ta);
+}
+
+/* ---------- 版本切换（WorkBuddy iframe / Lovable 截图） ---------- */
+document.querySelectorAll('[data-vswitch]').forEach(function(group){
+  var stage = document.querySelector('[data-stage="' + group.dataset.vswitch + '"]');
+  var openBtn = document.querySelector('[data-open="' + group.dataset.vswitch + '"]');
+  group.querySelectorAll('.ver-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      group.querySelectorAll('.ver-btn').forEach(function(b){ b.classList.remove('on'); });
+      btn.classList.add('on');
+      var file = btn.getAttribute('data-file');
+      var iframe = stage.querySelector('iframe');
+      var img = stage.querySelector('img');
+      if(iframe) iframe.src = file;
+      if(img) img.src = file;
+      stage.classList.toggle('mini', btn.getAttribute('data-mini') === '1');
+      if(openBtn) openBtn.setAttribute('data-file', file);
+    });
+  });
+});
+document.querySelectorAll('[data-open]').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    var file = btn.getAttribute('data-file');
+    if(file){ window.open(file, '_blank'); }
+  });
+});
+
+/* ---------- Toast ---------- */
+var toastEl = document.getElementById('toast');
+var toastTimer = null;
+function toast(msg){
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ toastEl.classList.remove('show'); }, 2200);
+}
+
+goTo(0);
+</script>
+</body>
+</html>
