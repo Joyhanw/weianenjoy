@@ -125,9 +125,139 @@
   .jump-btn.blue { background: linear-gradient(135deg,var(--blue),#2563eb); color: #fff; }
   .jump-link { display: inline-flex; align-items: center; gap: 6px; padding: 8px 18px; border-radius: 100px; border: 1px solid var(--border); color: var(--text2); font-size: 13px; text-decoration: none; transition: all 0.2s; }
   .jump-link:hover { border-color: var(--gold); color: var(--gold); }
+
+  /* ===== 密码锁屏 ===== */
+  #lock-screen { position: fixed; inset: 0; z-index: 9999; background: var(--bg); display: flex; align-items: center; justify-content: center; transition: opacity 0.6s, visibility 0.6s; }
+  #lock-screen.unlocked { opacity: 0; visibility: hidden; pointer-events: none; }
+  .lock-box { width: min(380px, 88vw); text-align: center; padding: 40px 32px; background: var(--bg2); border: 1px solid var(--border); border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+  .lock-icon { font-size: 44px; margin-bottom: 16px; }
+  .lock-title { font-size: 20px; font-weight: 700; margin-bottom: 6px; background: var(--gradient); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+  .lock-sub { font-size: 13px; color: var(--text3); margin-bottom: 26px; }
+  .lock-input { width: 100%; padding: 14px 16px; font-size: 18px; letter-spacing: 6px; text-align: center; background: var(--bg3); color: var(--text); border: 1px solid var(--border); border-radius: 12px; outline: none; font-family: var(--font); transition: border-color 0.2s; }
+  .lock-input:focus { border-color: var(--gold); }
+  .lock-btn { width: 100%; margin-top: 14px; padding: 13px; font-size: 15px; font-weight: 700; border: none; border-radius: 12px; background: linear-gradient(135deg, var(--gold), #d97706); color: #0a0a14; cursor: pointer; font-family: var(--font); transition: transform 0.15s, box-shadow 0.2s; }
+  .lock-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(245,158,11,0.35); }
+  .lock-err { margin-top: 12px; font-size: 13px; color: #ef4444; min-height: 18px; opacity: 0; transition: opacity 0.2s; }
+  .lock-err.show { opacity: 1; }
+  .lock-box.shake { animation: lockshake 0.45s; }
+  @keyframes lockshake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-10px)} 40%{transform:translateX(10px)} 60%{transform:translateX(-6px)} 80%{transform:translateX(6px)} }
 </style>
 </head>
 <body>
+
+<!-- 密码锁屏 -->
+<div id="lock-screen">
+  <div class="lock-box" id="lock-box">
+    <div class="lock-icon">🔒</div>
+    <div class="lock-title">唯安分享 · AI产品经理的底牌</div>
+    <div class="lock-sub">本内容受密码保护，请输入密码查看</div>
+    <input class="lock-input" id="lock-input" type="password" inputmode="numeric" maxlength="16" placeholder="请输入密码" autocomplete="off">
+    <button class="lock-btn" id="lock-btn">解锁</button>
+    <div class="lock-err" id="lock-err">密码不正确，请重试</div>
+  </div>
+</div>
+<script>
+(function () {
+  // 密码的 SHA-256 摘要（避免明文出现在源码中）
+  var TARGET = '3ce2bbc0dd463c0e56174e339cf4bbacbd0c45d9e3a577450957d4a52c67fe48';
+
+  var screen_ = document.getElementById('lock-screen');
+  var box = document.getElementById('lock-box');
+  var input = document.getElementById('lock-input');
+  var btn = document.getElementById('lock-btn');
+  var err = document.getElementById('lock-err');
+
+  function unlock() {
+    screen_.classList.add('unlocked');
+    setTimeout(function () { screen_.remove(); }, 700);
+    document.documentElement.style.overflow = '';
+    document.body.style.overflow = '';
+  }
+
+  // 每次打开都必须输密码，锁定背景滚动
+  document.documentElement.style.overflow = 'hidden';
+  document.body.style.overflow = 'hidden';
+
+  function sha256(text) {
+    if (window.crypto && crypto.subtle && window.isSecureContext !== false) {
+      return crypto.subtle.digest('SHA-256', new TextEncoder().encode(text)).then(function (buf) {
+        return Array.from(new Uint8Array(buf)).map(function (b) { return b.toString(16).padStart(2, '0'); }).join('');
+      });
+    }
+    // 非安全上下文（如 file:// 老浏览器）降级：纯 JS 实现
+    return Promise.resolve(sha256Sync(text));
+  }
+
+  function sha256Sync(ascii) {
+    function rr(v, a) { return (v >>> a) | (v << (32 - a)); }
+    var maxWord = Math.pow(2, 32), i, j, result = '';
+    var words = [], asciiBitLength = ascii.length * 8;
+    var hash = sha256Sync.h = sha256Sync.h || [], k = sha256Sync.k = sha256Sync.k || [];
+    var primeCounter = k.length, isComposite = {};
+    for (var candidate = 2; primeCounter < 64; candidate++) {
+      if (!isComposite[candidate]) {
+        for (i = 0; i < 313; i += candidate) isComposite[i] = candidate;
+        hash[primeCounter] = (Math.pow(candidate, 0.5) * maxWord) | 0;
+        k[primeCounter++] = (Math.pow(candidate, 1 / 3) * maxWord) | 0;
+      }
+    }
+    ascii += '\x80';
+    while (ascii.length % 64 - 56) ascii += '\x00';
+    for (i = 0; i < ascii.length; i++) {
+      j = ascii.charCodeAt(i); if (j >> 8) return '';
+      words[i >> 2] |= j << ((3 - i) % 4) * 8;
+    }
+    words[words.length] = (asciiBitLength / maxWord) | 0;
+    words[words.length] = asciiBitLength;
+    for (j = 0; j < words.length;) {
+      var w = words.slice(j, j += 16), oldHash = hash;
+      hash = hash.slice(0, 8);
+      for (i = 0; i < 64; i++) {
+        var w15 = w[i - 15], w2 = w[i - 2];
+        var a = hash[0], e = hash[4];
+        var temp1 = hash[7]
+          + (rr(e, 6) ^ rr(e, 11) ^ rr(e, 25))
+          + ((e & hash[5]) ^ (~e & hash[6]))
+          + k[i]
+          + (w[i] = (i < 16) ? w[i] : (w[i - 16] + (rr(w15, 7) ^ rr(w15, 18) ^ (w15 >>> 3)) + w[i - 7] + (rr(w2, 17) ^ rr(w2, 19) ^ (w2 >>> 10))) | 0);
+        var temp2 = (rr(a, 2) ^ rr(a, 13) ^ rr(a, 22)) + ((a & hash[1]) ^ (a & hash[2]) ^ (hash[1] & hash[2]));
+        hash = [(temp1 + temp2) | 0].concat(hash);
+        hash[4] = (hash[4] + temp1) | 0;
+      }
+      for (i = 0; i < 8; i++) hash[i] = (hash[i] + oldHash[i]) | 0;
+    }
+    for (i = 0; i < 8; i++) {
+      for (j = 3; j + 1; j--) {
+        var b = (hash[i] >> (j * 8)) & 255;
+        result += ((b < 16) ? '0' : '') + b.toString(16);
+      }
+    }
+    return result;
+  }
+
+  function fail() {
+    err.classList.add('show');
+    box.classList.remove('shake');
+    void box.offsetWidth; // 重触发动画
+    box.classList.add('shake');
+    input.value = '';
+    input.focus();
+  }
+
+  function attempt() {
+    var v = (input.value || '').trim();
+    if (!v) { input.focus(); return; }
+    sha256(v).then(function (h) {
+      if (h === TARGET) { unlock(); } else { fail(); }
+    });
+  }
+
+  btn.addEventListener('click', attempt);
+  input.addEventListener('keydown', function (e) { if (e.key === 'Enter') attempt(); });
+  input.addEventListener('input', function () { err.classList.remove('show'); });
+  setTimeout(function () { input.focus(); }, 100);
+})();
+</script>
 
 <div id="progress-bar"><span id="progress-fill"></span></div>
 <div id="sidebar-mask" onclick="toggleSidebar()"></div>
