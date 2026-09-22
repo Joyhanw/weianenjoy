@@ -1,0 +1,848 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>泰隆银行 AI 应用创新与运营管理平台 · 蓝图方案</title>
+<style>
+/* ===== RESET & BASE ===== */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#0f2b46; --navy-light:#1a3f63; --navy-lighter:#2a5580;
+  --gold:#c8963e; --gold-light:#d4a85a; --gold-pale:#fdf6ed;
+  --white:#fff; --bg:#f4f6f9; --card:#fff;
+  --text:#1e2a36; --text-secondary:#5a6b7d; --text-muted:#8a99ab;
+  --border:#e2e8f0; --shadow:0 2px 12px rgba(0,0,0,.06);
+  --shadow-lg:0 8px 32px rgba(0,0,0,.1);
+  --radius:10px; --radius-sm:6px; --radius-lg:14px;
+  --font:"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",sans-serif;
+  --transition:0.3s cubic-bezier(.4,0,.2,1);
+  --blue:#3b82f6; --purple:#8b5cf6; --orange:#f59e0b; --green:#10b981;
+}
+html,body{height:100%;overflow:hidden;font-family:var(--font);background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased}
+
+/* ===== SLIDE CONTAINER ===== */
+#app{height:100vh;width:100vw;position:relative;overflow:hidden}
+.slide{position:absolute;inset:0;display:flex;flex-direction:column;opacity:0;pointer-events:none;transition:opacity var(--transition);overflow-y:auto}
+.slide.active{opacity:1;pointer-events:auto;z-index:2}
+.slide-content{flex:1;max-width:1200px;margin:0 auto;width:100%;padding:36px 60px 20px}
+.slide.cover .slide-content{justify-content:center;align-items:center;text-align:center;padding:60px}
+.slide.panoramic .slide-content{max-width:1060px;padding:24px 60px 50px}
+
+/* ===== TOP BAR ===== */
+.topbar{height:4px;background:var(--border);position:relative;z-index:10;flex-shrink:0}
+.topbar-fill{height:100%;background:linear-gradient(90deg,var(--navy),var(--gold));transition:width .4s ease}
+
+/* ===== SIDE NAV ===== */
+.side-nav{position:fixed;right:12px;top:50%;transform:translateY(-50%);z-index:110;display:flex;flex-direction:column;gap:14px}
+.side-nav-item{display:flex;align-items:center;gap:10px;cursor:pointer;text-decoration:none;transition:all var(--transition)}
+.side-nav-dot{width:10px;height:10px;border-radius:50%;background:var(--border);transition:all var(--transition);flex-shrink:0}
+.side-nav-item.active .side-nav-dot{background:var(--navy);box-shadow:0 0 0 3px var(--navy)33;width:12px;height:12px}
+.side-nav-item:hover .side-nav-dot{background:var(--text-muted)}
+.side-nav-label{font-size:12px;color:var(--text-muted);white-space:nowrap;opacity:0;transform:translateX(6px);transition:all var(--transition)}
+.side-nav-item:hover .side-nav-label,.side-nav-item.active .side-nav-label{opacity:1;transform:translateX(0);color:var(--navy);font-weight:600}
+
+/* ===== BOTTOM NAV ===== */
+.nav-bottom{position:fixed;bottom:0;left:0;right:0;z-index:100;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:center;padding:10px 20px;gap:6px}
+.nav-dot{width:28px;height:3px;border-radius:2px;background:var(--border);cursor:pointer;transition:all var(--transition);border:none;outline:none}
+.nav-dot:hover{background:var(--text-muted)}
+.nav-dot.active{width:42px;background:var(--navy)}
+.nav-arrow{position:fixed;bottom:80px;z-index:100;width:36px;height:36px;border-radius:50%;border:1px solid var(--border);background:var(--white);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--text-secondary);transition:all var(--transition);box-shadow:var(--shadow);outline:none}
+.nav-arrow:hover{background:var(--navy);color:var(--white);border-color:var(--navy)}
+.nav-arrow.left{left:24px}
+.nav-arrow.right{right:56px}
+.nav-label{position:fixed;bottom:52px;left:50%;transform:translateX(-50%);z-index:100;font-size:12px;color:var(--text-muted);letter-spacing:.5px}
+
+/* ===== COMMON ===== */
+.section-title{font-size:32px;font-weight:700;color:var(--navy);line-height:1.3;margin-bottom:6px}
+.section-subtitle{font-size:16px;color:var(--text-secondary);margin-bottom:24px;line-height:1.6}
+.highlight{color:var(--gold);font-weight:600}
+.card{background:var(--card);border-radius:var(--radius);padding:22px;box-shadow:var(--shadow);border:1px solid var(--border)}
+.card-row{display:flex;gap:16px;flex-wrap:wrap}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:14px;font-size:11px;font-weight:600}
+.badge-blue{background:#e8f0fe;color:var(--navy-light)}
+.badge-gold{background:var(--gold-pale);color:var(--gold)}
+.badge-green{background:#e8f5e9;color:#2e7d32}
+.badge-gray{background:#f0f0f0;color:var(--text-muted)}
+
+/* ===== PANORAMIC: SECTIONS ===== */
+.pano-section{padding:22px 0;border-bottom:1px dashed var(--border)}
+.pano-section:last-child{border-bottom:none}
+.pano-sec-label{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:700;color:var(--text-muted);letter-spacing:1.5px;margin-bottom:16px}
+.pano-sec-label::after{content:'';flex:1;height:1px;background:var(--border)}
+.pano-title{margin-bottom:20px}
+.pano-title .main{font-size:28px;font-weight:700;color:var(--navy);line-height:1.3}
+.pano-title .sub{font-size:14px;color:var(--text-secondary);margin-top:4px}
+
+/* ===== PAIN FLOW ===== */
+.pain-flow{display:flex;align-items:stretch;gap:0;flex-wrap:wrap;margin-bottom:16px}
+.pain-flow-card{flex:1;min-width:200px;background:var(--white);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);border-left:4px solid var(--navy)}
+.pain-flow-card.gold{border-left-color:var(--gold)}
+.pain-flow-card .pf-num{font-size:22px;font-weight:800;color:var(--gold);margin-bottom:4px}
+.pain-flow-card .pf-who{font-size:12px;color:var(--text-muted);margin-bottom:4px}
+.pain-flow-card .pf-pain{font-size:13px;font-weight:600;line-height:1.5;margin-bottom:2px}
+.pain-flow-card .pf-want{font-size:12px;color:var(--text-secondary);font-style:italic}
+.pain-flow-arrow{display:flex;align-items:center;padding:0 8px;font-size:20px;color:var(--text-muted);flex-shrink:0}
+
+/* ===== DEATH LOOP ===== */
+.death-loop{display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:center;padding:14px;background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);border:2px solid #e74c3c18}
+.death-loop span{padding:5px 12px;border-radius:14px;font-size:11px;font-weight:600;white-space:nowrap}
+.dl-red{background:#fdecea;color:#c0392b}
+.dl-orange{background:#fff3e0;color:#e67e22}
+.dl-yellow{background:#fff8e1;color:#b8860b}
+.dl-dark{background:#ffebee;color:#b71c1c;font-weight:700}
+.contradiction-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.contradiction-item{flex:1;min-width:180px;background:var(--white);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow);border:1px solid var(--border);text-align:center;font-size:12px;line-height:1.7}
+.contradiction-item strong{display:block;color:var(--navy);font-size:13px;margin-bottom:3px}
+
+/* ===== ARCH ===== */
+.arch-pano{display:flex;flex-direction:column;gap:16px;align-items:center}
+.arch-top-row{display:flex;gap:14px;flex-wrap:wrap;width:100%;justify-content:center}
+.arch-block{flex:1;min-width:220px;max-width:255px;background:var(--white);border-radius:var(--radius-lg);padding:20px 14px;text-align:center;cursor:pointer;transition:all var(--transition);box-shadow:var(--shadow);border:2px solid var(--border)}
+.arch-block:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg)}
+.arch-block.c1:hover{border-color:var(--blue);background:#eff6ff}
+.arch-block.c2:hover{border-color:var(--purple);background:#f5f3ff}
+.arch-block.c3:hover{border-color:var(--orange);background:#fffbeb}
+.arch-block.c4:hover{border-color:var(--green);background:#ecfdf5}
+.arch-block .blk-icon{font-size:36px;margin-bottom:8px}
+.arch-block .blk-title{font-size:16px;font-weight:700;color:var(--navy);margin-bottom:4px}
+.arch-block .blk-problem{font-size:11px;color:var(--text-muted);margin-bottom:8px}
+.arch-block .blk-do{font-size:12px;color:var(--text-secondary);line-height:1.5;background:#f9fafb;border-radius:6px;padding:8px 10px}
+.arch-base{width:100%;max-width:680px;background:linear-gradient(135deg,#f0f4f8,var(--white));border-radius:var(--radius-lg);padding:16px 24px;text-align:center;cursor:pointer;transition:all var(--transition);box-shadow:var(--shadow);border:2px solid var(--navy-light)}
+.arch-base:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg)}
+.arch-base .blk-icon{font-size:28px;margin-bottom:4px}
+.arch-base .blk-title{font-size:15px;font-weight:700;color:var(--navy);margin-bottom:4px}
+.arch-base .blk-do{font-size:12px;color:var(--text-secondary)}
+.arch-connector{font-size:18px;color:var(--text-muted);padding:2px 0}
+
+/* ===== ROLES ===== */
+.role-map{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.role-card{flex:0 0 auto;min-width:140px;max-width:168px;background:var(--white);border-radius:var(--radius);padding:14px 12px;box-shadow:var(--shadow);border:2px solid var(--border);text-align:center;cursor:pointer;transition:all var(--transition)}
+.role-card:hover{border-color:var(--navy);transform:translateY(-2px);box-shadow:var(--shadow-lg)}
+.role-card.under-blue{border-top:3px solid var(--blue)}
+.role-card.under-purple{border-top:3px solid var(--purple)}
+.role-card.under-orange{border-top:3px solid var(--orange)}
+.role-card.under-green{border-top:3px solid var(--green)}
+.role-card.under-navy{border-top:3px solid var(--navy)}
+.role-card .rc-icon{font-size:26px;margin-bottom:4px}
+.role-card .rc-name{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:2px}
+.role-card .rc-dept{font-size:10px;color:var(--text-muted);margin-bottom:6px}
+.role-card .rc-do{font-size:10px;color:var(--text-secondary);line-height:1.5;background:#f9fafb;border-radius:6px;padding:5px 7px}
+.role-center-label{font-size:11px;color:var(--text-muted);font-weight:600;text-align:center;margin-bottom:6px;letter-spacing:.5px}
+
+/* ===== JOURNEY ===== */
+.journey-strip{display:flex;align-items:center;gap:0;flex-wrap:wrap;justify-content:center}
+.journey-node{background:var(--white);border:2px solid var(--border);border-radius:var(--radius);padding:9px 12px;text-align:center;cursor:pointer;transition:all var(--transition);font-size:12px;font-weight:500;min-width:80px}
+.journey-node:hover{border-color:var(--navy);box-shadow:var(--shadow-lg);transform:translateY(-2px)}
+.journey-node .jn-step{font-size:10px;color:var(--text-muted);margin-bottom:1px}
+.journey-node .jn-label{font-size:12px;font-weight:600;color:var(--navy)}
+.journey-arrow{color:var(--text-muted);font-size:15px;margin:0 2px;flex-shrink:0}
+
+/* ===== ROLE MATRIX ===== */
+.matrix-wrap{overflow-x:auto;margin-top:8px}
+.matrix-table{border-collapse:collapse;width:100%;font-size:13px}
+.matrix-table th{background:var(--navy);color:var(--white);padding:11px 9px;font-weight:600;font-size:13px;text-align:center;white-space:nowrap;position:sticky;top:0}
+.matrix-table th.org{background:var(--navy-lighter);min-width:66px}
+.matrix-table td{padding:9px;border:1px solid var(--border);text-align:center;vertical-align:middle;cursor:pointer;transition:all .2s;background:var(--white);line-height:1.5}
+.matrix-table td:hover{background:var(--gold-pale);border-color:var(--gold)}
+.matrix-table td.clickable{position:relative}
+.matrix-table td.clickable::after{content:'›';position:absolute;right:4px;bottom:1px;font-size:13px;color:var(--text-muted)}
+
+/* ===== DRILL PANEL ===== */
+.drill-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;opacity:0;pointer-events:none;transition:opacity .3s}
+.drill-overlay.open{opacity:1;pointer-events:auto}
+.drill-panel{position:fixed;top:0;right:-520px;width:460px;height:100vh;background:var(--white);z-index:201;box-shadow:-4px 0 24px rgba(0,0,0,.15);transition:right .35s cubic-bezier(.4,0,.2,1);overflow-y:auto;padding:32px 28px}
+.drill-panel.open{right:0}
+.drill-close{position:absolute;top:14px;right:14px;width:34px;height:34px;border-radius:50%;border:1px solid var(--border);background:var(--white);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.drill-close:hover{background:var(--navy);color:var(--white);border-color:var(--navy)}
+.drill-title{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:4px}
+.drill-subtitle{font-size:13px;color:var(--text-secondary);margin-bottom:20px}
+.drill-section{margin-bottom:18px}
+.drill-section h4{font-size:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-weight:600}
+.drill-section .content{font-size:13px;color:var(--text);line-height:1.7}
+.drill-cap-list{display:flex;flex-direction:column;gap:4px}
+.dc-item{display:flex;align-items:flex-start;gap:10px;padding:8px 10px;background:#f9fafb;border-radius:6px;transition:background .2s}
+.dc-item:hover{background:#e8f0fe}
+.dc-num{flex-shrink:0;width:22px;height:22px;border-radius:50%;background:var(--navy);color:var(--white);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.dc-text{font-size:13px;color:var(--text);line-height:1.6;flex:1}
+.dc-text strong{color:var(--navy)}
+.drill-phase-tag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;margin-left:4px}
+.drill-phase-tag.p1{background:var(--gold-pale);color:var(--gold)}
+.drill-phase-tag.p2{background:#e8f0fe;color:var(--navy-light)}
+.drill-phase-tag.p3{background:#f0f0f0;color:var(--text-muted)}
+
+/* ===== TIMELINE ===== */
+.timeline{display:flex;gap:20px;margin-top:8px}
+.timeline-item{flex:1;background:var(--white);border-radius:var(--radius);padding:22px;border:2px solid var(--border);transition:all var(--transition)}
+.timeline-item:hover{border-color:var(--navy);box-shadow:var(--shadow-lg)}
+.timeline-item.p1{border-color:var(--gold)}
+.timeline-item .phase-num{font-size:12px;color:var(--text-muted);font-weight:600;margin-bottom:4px}
+.timeline-item .phase-title{font-size:18px;font-weight:700;color:var(--navy);margin-bottom:4px}
+.timeline-item .phase-time{font-size:12px;color:var(--gold);font-weight:500;margin-bottom:14px}
+.timeline-item .phase-goal{font-size:13px;color:var(--text);margin-bottom:10px;line-height:1.6}
+.timeline-item .phase-list{list-style:none;padding:0}
+.timeline-item .phase-list li{font-size:12px;color:var(--text-secondary);padding:3px 0 3px 15px;position:relative;line-height:1.6}
+.timeline-item .phase-list li::before{content:'•';position:absolute;left:0;color:var(--navy);font-weight:700}
+.timeline-item .phase-list li.ph2::before{color:var(--navy-light)}
+.timeline-item .phase-list li.ph3::before{color:var(--text-muted)}
+
+/* ===== PHASE 1 + METRICS ===== */
+.phase1-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.phase1-grid .p1-card{background:var(--white);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);border:1px solid var(--border)}
+.phase1-grid .p1-card.full{grid-column:1/-1}
+.p1-card h4{font-size:14px;font-weight:700;color:var(--navy);margin-bottom:10px}
+.p1-card li{font-size:13px;color:var(--text-secondary);padding:4px 0;line-height:1.6;list-style:none}
+.p1-card li::before{content:'✓ ';color:var(--green);font-weight:700}
+.metric-inline{display:flex;gap:10px;flex-wrap:wrap}
+.metric-inline .mi{flex:1;min-width:100px;background:var(--white);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow);border:1px solid var(--border);text-align:center}
+.mi .val{font-size:22px;font-weight:800;color:var(--navy)}
+.mi .lbl{font-size:11px;color:var(--text-secondary);margin-top:3px;line-height:1.4}
+
+/* ===== LOOP COMPACT (inside phase1) ===== */
+.loop-compact{display:flex;gap:14px;flex-wrap:wrap}
+.loop-compact .loop-box{flex:1;min-width:260px;background:var(--white);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);border:1px solid var(--border)}
+.loop-box h4{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:10px;text-align:center}
+.loop-box .loop-flow{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px}
+.loop-box .loop-flow span{padding:4px 10px;border-radius:10px;text-align:center}
+.loop-box .loop-note{font-size:10px;color:var(--text-muted);text-align:center;margin-top:8px;line-height:1.5}
+
+/* ===== COVER ===== */
+.cover-title{font-size:40px;font-weight:800;color:var(--navy);line-height:1.35;margin-bottom:20px;letter-spacing:1px}
+.cover-byline{font-size:17px;color:var(--text-secondary);letter-spacing:2px}
+
+/* ===== EXPANSION GATE ===== */
+.gate-tags{display:flex;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--text)}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:1024px){
+  .slide-content{padding:28px 24px 16px}
+  .section-title{font-size:26px}
+  .timeline{flex-direction:column}
+  .drill-panel{width:100%;right:-100%}
+  .matrix-table{font-size:11px}
+  .matrix-table th,.matrix-table td{padding:6px 4px}
+  .cover-title{font-size:28px}
+  .role-card{min-width:120px}
+  .journey-node{min-width:68px;padding:7px 8px}
+  .pain-flow-card{min-width:160px}
+  .side-nav{right:4px;gap:10px}
+  .side-nav-dot{width:8px;height:8px}
+  .phase1-grid{grid-template-columns:1fr}
+  .nav-arrow.right{right:48px}
+}
+@media(max-width:640px){
+  .nav-arrow{display:none}
+  .slide-content{padding:18px 14px 12px}
+  .section-title{font-size:22px}
+  .pain-flow{flex-direction:column}
+  .pain-flow-arrow{transform:rotate(90deg);justify-content:center}
+  .arch-top-row{flex-direction:column;align-items:center}
+  .role-map{flex-direction:column;align-items:center}
+  .side-nav{right:2px;gap:8px}
+  .cover-title{font-size:22px}
+  .loop-compact{flex-direction:column}
+}
+</style>
+</head>
+<body>
+
+<div id="app">
+
+<!-- ===== TOP BAR ===== -->
+<div class="topbar"><div class="topbar-fill" id="topbarFill"></div></div>
+
+<!-- ===== NAV ARROWS ===== -->
+<button class="nav-arrow left" onclick="prevSlide()" title="上一页">◀</button>
+<button class="nav-arrow right" onclick="nextSlide()" title="下一页">▶</button>
+<div class="nav-label" id="navLabel">0 / 5</div>
+
+<!-- ===== SIDE NAV ===== -->
+<div class="side-nav" id="sideNav"></div>
+
+<!-- ===== DRILL OVERLAY ===== -->
+<div class="drill-overlay" id="drillOverlay" onclick="closeDrill()"></div>
+<div class="drill-panel" id="drillPanel"></div>
+
+<!-- ================================================================ -->
+<!-- SLIDE 0: COVER -->
+<!-- ================================================================ -->
+<div class="slide cover active" data-index="0">
+<div class="slide-content">
+  <div style="font-size:56px;margin-bottom:20px">🏦</div>
+  <div class="cover-title">泰隆银行<br>AI 应用创新与运营管理平台</div>
+  <div class="cover-byline">总体建设蓝图</div>
+</div>
+</div>
+
+<!-- ================================================================ -->
+<!-- SLIDE 1: PANORAMIC — 完整故事线 -->
+<!-- ================================================================ -->
+<div class="slide panoramic" data-index="1">
+<div class="slide-content">
+
+  <div class="pano-title">
+    <div class="main">从「需求堆积」到「全员 AI 创新」</div>
+    <div class="sub">一套完整的解决方案：为什么做 → 怎么做 → 谁来做 → 怎么跑起来</div>
+  </div>
+
+  <!-- ===== SECTION 0: PROBLEM CONTRADICTIONS ===== -->
+  <div class="pano-section">
+    <div class="pano-sec-label">一、银行当前面临的问题</div>
+    <div style="background:#fff;border-radius:14px;padding:14px 20px;margin-bottom:14px;box-shadow:0 2px 12px rgba(0,0,0,.05);border:1px solid #f0f0f0;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:6px">
+      <span style="background:#fdecea;color:#c0392b;padding:8px 18px;border-radius:20px;font-size:15px;font-weight:600">一线提需求</span>
+      <span style="color:#bbb;font-size:18px">→</span>
+      <span style="background:#fef9e7;color:#d4a017;padding:8px 18px;border-radius:20px;font-size:15px;font-weight:600">总行排期积压</span>
+      <span style="color:#bbb;font-size:18px">→</span>
+      <span style="background:#fef9e7;color:#d4a017;padding:8px 18px;border-radius:20px;font-size:15px;font-weight:600">员工自寻出路</span>
+      <span style="color:#bbb;font-size:18px">→</span>
+      <span style="background:#fdecea;color:#c0392b;padding:8px 18px;border-radius:20px;font-size:15px;font-weight:600">Excel / 外部AI</span>
+      <span style="color:#bbb;font-size:18px">→</span>
+      <span style="background:#fdecea;color:#c0392b;padding:8px 18px;border-radius:20px;font-size:15px;font-weight:600">数据外泄 · 影子IT · 无人维护</span>
+      <span style="color:#bbb;font-size:18px">→</span>
+      <span style="background:#fdecea;color:#c0392b;padding:8px 18px;border-radius:20px;font-size:15px;font-weight:600">总行更不敢放开</span>
+    </div>
+    <div class="pain-cards" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:12px">
+      <div style="background:#fff;border-radius:12px;padding:20px 16px;text-align:center;box-shadow:0 2px 12px rgba(0,0,0,.06);border:1px solid #e8edf2">
+        <div style="font-size:22px;font-weight:700;color:var(--navy);margin-bottom:8px">矛盾一</div>
+        <div style="font-size:15px;color:var(--text-secondary);line-height:1.6">小需求价值真实，但排期成本高于开发成本</div>
+      </div>
+      <div style="background:#fff;border-radius:12px;padding:20px 16px;text-align:center;box-shadow:0 2px 12px rgba(0,0,0,.06);border:1px solid #e8edf2">
+        <div style="font-size:22px;font-weight:700;color:var(--navy);margin-bottom:8px">矛盾二</div>
+        <div style="font-size:15px;color:var(--text-secondary);line-height:1.6">长尾需求数量大，科技产能注定覆盖不完</div>
+      </div>
+      <div style="background:#fff;border-radius:12px;padding:20px 16px;text-align:center;box-shadow:0 2px 12px rgba(0,0,0,.06);border:1px solid #e8edf2">
+        <div style="font-size:22px;font-weight:700;color:var(--navy);margin-bottom:8px">矛盾三</div>
+        <div style="font-size:15px;color:var(--text-secondary);line-height:1.6">多部门重复建设，同一类需求各自做一遍</div>
+      </div>
+    </div>
+    <div style="text-align:center;font-size:15px;color:var(--navy);font-weight:600;margin-bottom:14px">
+      问题不在需求太多，在<span style="color:var(--gold)">供给方式必须改变</span>——不是禁止创新，而是把创新纳入体系。
+    </div>
+  </div>
+
+  <!-- ===== SECTION 1: ANSWER ===== -->
+  <div class="pano-section">
+    <div class="pano-sec-label">二、解决方案总体蓝图 · 五中心 <span style="font-weight:400;font-size:11px;color:var(--text-muted);letter-spacing:0">（点击中心查看完整能力规划）</span></div>
+    <div class="arch-pano">
+      <div class="arch-top-row">
+        <div class="arch-block c1" onclick="openArchDrillByKey('c1')">
+          <div class="blk-icon">📋</div><div class="blk-title">需求创新中心</div>
+          <div class="blk-problem">解决：不知道怎么做、需求说不清</div>
+          <div class="blk-do">AI 多轮追问 → 需求卡<br>分级判断 → 可行方案</div>
+        </div>
+        <div class="arch-block c2" onclick="openArchDrillByKey('c2')">
+          <div class="blk-icon">⚡</div><div class="blk-title">应用生产中心</div>
+          <div class="blk-problem">解决：不会写代码、方案到应用断层</div>
+          <div class="blk-do">AI 生成页面/逻辑/数据<br>预览调试 · 版本回滚</div>
+        </div>
+        <div class="arch-block c3" onclick="openArchDrillByKey('c3')">
+          <div class="blk-icon">🧩</div><div class="blk-title">企业能力中心</div>
+          <div class="blk-problem">解决：重复造轮子、AI 瞎猜接口</div>
+          <div class="blk-do">只让 AI 用登记过的能力<br>科技建能力 · AI 做编排</div>
+        </div>
+        <div class="arch-block c4" onclick="openArchDrillByKey('c4')">
+          <div class="blk-icon">📊</div><div class="blk-title">运营治理中心</div>
+          <div class="blk-problem">解决：上线后没人管、价值不可见</div>
+          <div class="blk-do">运营驾驶舱 · 应用管理<br>推广配置 · 上下架管理</div>
+        </div>
+        <div class="arch-block" style="border-top:4px solid #e74c3c" onclick="openArchDrillByKey('data')">
+          <div class="blk-icon">📈</div><div class="blk-title">数据管理中心</div>
+          <div class="blk-problem">解决：领导看不到全局、决策缺数据支撑</div>
+          <div class="blk-do">管理驾驶舱 · 分行看板<br>北极星指标 · 价值台账</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== SECTION 2: WHO + HOW ===== -->
+  <div class="pano-section">
+    <div class="pano-sec-label">三、不同角色 · 各司其职 <span style="font-weight:400;font-size:11px;color:var(--text-muted);letter-spacing:0">（点击角色卡片查看详情）</span></div>
+
+    <div style="margin-bottom:12px">
+      <div class="role-center-label">▼ 需求侧：提需求 · 造应用 · 确认价值</div>
+      <div class="role-map">
+        <div class="role-card under-blue" onclick="openRoleDrill('业务创新者','支行/分行/总行','种子用户 · 业务骨干 · 数字化联络人','在AI对话首页用自然语言描述业务需求，AI生成应用后预览调试；在应用市场浏览/基于模板创建应用；在我的应用管理已创建应用，进入画布编辑器修改、发布','AI对话首页 · 应用市场 · 我的应用','应用能否解决业务问题、模板质量')">
+          <div class="rc-icon">💡</div><div class="rc-name">业务创新者</div><div class="rc-dept">业务骨干·种子用户</div><div class="rc-do">描述需求 · 生成应用<br>沉淀模板</div>
+        </div>
+        <div class="role-card under-blue" onclick="openRoleDrill('业务 Owner','总行/分行/支行','部门负责人 · 支行行长 · 指定责任人','在审核列表查看待审核的发布申请，查看审核详情（抽屉），执行通过/驳回操作，预览已通过的应用','审核列表','应用出了问题第一责任人')">
+          <div class="rc-icon">✅</div><div class="rc-name">业务 Owner</div><div class="rc-dept">部门/支行负责人</div><div class="rc-do">确认需求 · 验收<br>对应用负责</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-bottom:12px">
+      <div class="role-center-label">▼ 供给侧：建能力 · 守红线 · 管运营</div>
+      <div class="role-map">
+        <div class="role-card under-orange" onclick="openRoleDrill('总行科技','总行（全行统一）','总行科技部研发人员','① 在能力列表注册/编辑/停用启用企业能力（API/组件/数据服务），遵循组件优先原则——科技建能力、AI做编排；持续监控能力SLA<br>② 在缺口工单处理能力缺口：收到工单→评估→封装→上架→通知申请人<br>③ 在规则配置新增/启停安全与数据治理规则（禁止未授权API、敏感数据脱敏、禁止硬编码密钥等）<br>④ 在代码规则维护代码生成模板/命名规范/UI规范/接口规范/安全规则，确保AI生成代码符合行内标准<br>⑤ 在环境管理新增/编辑环境配置（开发/测试/灰度/生产），多环境隔离，持续监控运行状态<br>⑥ 在部署治理配置自动部署的环境映射、灰度策略、回滚机制<br>【需要对接配合】与各业务系统Owner对接获取API文档与鉴权方式；缺口工单需与原系统Owner协调接口权限与联调；规则配置需与安全/合规部门确认；代码规则需与架构/安全确认；环境管理需与运维团队协调资源与隔离部署；部署治理需与运维确认部署窗口与回滚预案','能力列表 · 缺口工单 · 规则配置 · 环境管理','能力的SLA和安全性、缺口闭环时效、平台运行稳定、安全规则有效')">
+          <div class="rc-icon">🔧</div><div class="rc-name">总行科技</div><div class="rc-dept">科技部研发</div><div class="rc-do">建能力 · 响应缺口 · 维代码<br>设规则 · 管环境 · 管部署</div>
+        </div>
+        <div class="role-card under-green" onclick="openRoleDrill('平台运营','总行（全行统一）','数字化运营 / 创新管理部门','① 在运营驾驶舱查看活跃应用数/月活用户/月度使用次数/应用健康率等运营数据，查看使用趋势、应用健康分布、TOP5应用排行<br>② 在应用管理查看已孵化应用列表，配置推广范围（全行/指定机构/指定部门），预览应用','运营驾驶舱 · 应用管理','平台有人用、应用不腐化')">
+          <div class="rc-icon">📊</div><div class="rc-name">平台运营</div><div class="rc-dept">数字化运营</div><div class="rc-do">看数据 · 管应用<br>配推广</div>
+        </div>
+        <div class="role-card under-navy" onclick="openRoleDrill('管理者','总行/分行/支行','分管行领导 · 运营委员会 · 分行/支行领导','在管理驾驶舱查看总行/分行/支行三视角的KPI指标（场景数/智能体数/调用量/覆盖员工），查看趋势图表、分行排行、应用组合、风险概览','管理驾驶舱','方向决策、资源审批、扩围判断')">
+          <div class="rc-icon">📈</div><div class="rc-name">管理者</div><div class="rc-dept">行领导·委员会</div><div class="rc-do">看全局 · 定方向<br>批资源 · 审扩围</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pano-sec-label" style="margin-top:10px">四、完整业务闭环 · 9 步走完一条需求的一生 <span style="font-weight:400;font-size:11px;color:var(--text-muted);letter-spacing:0">（点击每步查看详情）</span></div>
+    <div class="journey-strip">
+      <div class="journey-node" onclick="openStepDrill(1,'需求提出','员工打开AI对话，用大白话描述：「我每次拜访完客户要手工登记，每周还要汇总台账，太麻烦了。」系统记录原始描述。','这一步走完：需求从脑子里说出来、被系统记录下来了。接下来AI会帮助澄清和完善。')"><div class="jn-step">STEP 1</div><div class="jn-label">需求提出</div></div>
+      <div class="journey-arrow">→</div>
+      <div class="journey-node" onclick="openStepDrill(2,'AI 分析澄清','用户一句话描述业务需求（如「我要一个园区招商管理系统」），AI 即可直接生成应用初稿；过程中支持多轮对话提问、确认、生成：AI 主动追问关键细节（如目标用户、功能范围、数据字段、权限要求），用户回答后 AI 调整并继续生成；用户也可以反向提问或描述修改诉求，AI 据此迭代应用。生成过程中实时匹配企业能力中心，已满足能力打 ✓、缺失能力打 ✗，缺失项以提醒形式展示，用户点击确认后再生成缺口工单推送到总行科技部。','一个可点击预览的应用初稿（含页面结构、数据字段、能力匹配清单），无需先出需求卡。用户可在画布中对话修改、确认后进入下一步生成与测试。')"><div class="jn-step">STEP 2</div><div class="jn-label">AI 分析</div></div>
+      <div class="journey-arrow">→</div>
+      <div class="journey-node" onclick="openStepDrill(3,'能力匹配','系统扫描需求卡，自动检索企业能力中心：页面组件有 ✓、数据存储有 ✓、消息通知有 ✓、「客户档案查询」缺失 ✗。生成可行性报告：7项能力满足，1项缺失。综合判定 L1（独立轻应用），可自主开发，无需转专业研发。缺失的「客户档案查询」以提醒形式展示，用户点击确认后生成能力缺口工单，通知总行科技团队。','这一步走完：能不能做、缺什么、谁来解决——三个问题都有了答案。需求没有被拒绝，缺的能力有明确的工单跟踪。')"><div class="jn-step">STEP 3</div><div class="jn-label">能力匹配</div></div>
+      <div class="journey-arrow">→</div>
+      <div class="journey-node" onclick="openStepDrill(4,'应用生成','AI按照需求卡和可行性方案，依次生成：页面结构（拜访列表页 + 录入表单 + 统计看板）、数据模型（客户名、拜访日期、沟通内容、下次跟进时间）、后端接口（增删改查 + 统计分析）、Mock模拟数据。员工在小鱼泡泡中实时预览效果，不满意可以对话修改：「把拜访日期放到第一列」「加一个筛选按客户名搜索」。','这一步走完：一个可以真实点击操作的应用已经存在了。员工看到的不再是方案文档，而是能用的东西。')"><div class="jn-step">STEP 4</div><div class="jn-label">应用生成</div></div>
+      <div class="journey-arrow">→</div>
+      <div class="journey-node" onclick="openStepDrill(5,'测试验证','系统自动执行：单元测试通过、接口测试通过、安全扫描无高危漏洞、无硬编码密钥、依赖无已知漏洞、数据隔离正确。系统生成测试证据包，全部自动完成，无需用户逐项验收。','这一步走完：应用通过了机器的自动检查，也通过了人的业务验收。质量有了证据，可以放心进入下一步。')"><div class="jn-step">STEP 5</div><div class="jn-label">测试验证</div></div>
+    </div>
+    <div class="journey-strip" style="margin-top:8px">
+      <div class="journey-node" onclick="openStepDrill(6,'审核发布','应用等级为 L1，触发 Owner 自验审批。Owner（支行行长）确认：使用范围为本支行客户经理岗，数据不涉及客户敏感信息，功能验证通过。审批通过。应用自动部署至生产环境，发布到行内小鱼泡泡/小程序平台。','这一步走完：应用从测试环境到了生产环境。指定范围的员工可以在小鱼泡泡上看到并使用这个应用了。发布有记录、可追溯。')"><div class="jn-step">STEP 6</div><div class="jn-label">审核发布</div></div>
+      <div class="journey-arrow">→</div>
+      <div class="journey-node" onclick="openStepDrill(7,'上线使用','支行 15 名客户经理在小鱼泡泡上看到「拜访管理」应用，开始日常使用：录入拜访记录、搜索历史、查看月度统计看板。系统后台持续监控：访问量、响应时间、错误率、用户活跃度。','这一步走完：应用开始产生真实使用数据，不再是一个Demo。谁在用、用得好不好、有没有问题——全部可见。')"><div class="jn-step">STEP 7</div><div class="jn-label">上线使用</div></div>
+      <div class="journey-arrow">→</div>
+      <div class="journey-node" onclick="openStepDrill(8,'运营分析','运营人员查看本周数据：12 人使用，累计录入 86 条拜访记录，平均每人每天使用 3 次。与之前手工 Excel 对比，每次拜访登记节省约 8 分钟。无故障、无投诉。平台自动标记为「健康」。分行运营人员注意到这个应用，申请推广到其他支行。','这一步走完：应用的价值有了数据支撑。要不要推广、要不要优化、要不要沉淀为模板——有了决策依据，不再是拍脑袋。')"><div class="jn-step">STEP 8</div><div class="jn-label">运营分析</div></div>
+      <div class="journey-arrow">→</div>
+      <div class="journey-node" onclick="openStepDrill(9,'能力沉淀','「拜访管理」应用被运营人员标记为优质模板。系统自动抽取：页面模板（拜访列表+表单+看板）、数据模型（客户拜访实体）、业务组件（拜访统计图表）。进入企业能力中心。下次有其他客户经理要建台账类应用，在应用市场搜索「拜访」，直接基于模板1分钟创建，不用再从零描述需求。','这一步走完：一个人的应用变成了全行的资产，管理者在驾驶舱中看到整个过程的聚合数据——多少应用上线、多少人使用、节省了多少工时。下一次相同的需求不再从头开始，越用越快、越用越省。')"><div class="jn-step">STEP 9</div><div class="jn-label">能力沉淀</div></div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- ================================================================ -->
+<!-- SLIDE 2: THREE PHASES -->
+<!-- ================================================================ -->
+<div class="slide" data-index="2">
+<div class="slide-content">
+  <div class="section-title">分三阶段建设</div>
+  <div class="section-subtitle">一期不是缩小版的"全功能平台"，而是必须跑通的<span class="highlight">一条受控生产链</span>。二、三期只在一期证明价值后才启动。</div>
+  <div class="timeline">
+    <div class="timeline-item p1">
+      <div class="phase-num">第一阶段</div>
+      <div class="phase-title">AI 应用创新闭环</div>
+      <div class="phase-goal"><strong>目标：</strong>员工可以 提需求 → AI生成 → 发布使用</div>
+      <ul class="phase-list">
+        <li>用户入口：统一登录、个人小鱼泡泡、应用市场（基础版）</li>
+        <li>需求分析：自然语言需求、AI澄清、需求卡、L0-L3分级</li>
+        <li>应用生成：页面/数据/后端生成、预览调试、版本管理</li>
+        <li>基础治理：用户权限、五道质量门禁、分级发布审核</li>
+        <li>基础能力中心：模板、组件、API目录、能力缺口工单</li>
+        <li>应用管理：应用台账、Owner、全生命周期状态</li>
+      </ul>
+      <div style="margin-top:12px;padding:8px 12px;background:var(--gold-pale);border-radius:6px;font-size:12px;color:var(--navy)">
+        <strong>验收：</strong>3-5个真实场景上线并持续使用，全链路闭环可追溯
+      </div>
+    </div>
+    <div class="timeline-item">
+      <div class="phase-num">第二阶段</div>
+      <div class="phase-title">企业能力复用体系</div>
+      <div class="phase-goal"><strong>目标：</strong>能力资产化，不重复造轮子</div>
+      <ul class="phase-list">
+        <li>API / 数据服务统一治理与细粒度授权</li>
+        <li>业务化能力地图与能力缺口池（聚合排序驱动投资）</li>
+        <li>岗位开发 Profile：不同角色不同能力边界</li>
+        <li>模板市场：部门场景包、智能推荐</li>
+        <li>分层培训认证体系（6层课程）与社区运营</li>
+        <li>四级服务台：AI自助→社区互助→运营→技术</li>
+        <li>可信标识：个人实验/部门认证/官方推荐/公共应用</li>
+        <li>应用健康评分、重复应用识别与合并建议</li>
+        <li>运营节奏制度化：周/月/季/年固定动作</li>
+      </ul>
+    </div>
+    <div class="timeline-item">
+      <div class="phase-num">第三阶段</div>
+      <div class="phase-title">规模化运营治理</div>
+      <div class="phase-goal"><strong>目标：</strong>平台长期运行、持续产生价值</div>
+      <ul class="phase-list">
+        <li>智能运营：需求趋势自动发现、应用组合分析</li>
+        <li>AI 辅助代码与发布审批</li>
+        <li>跨应用技术债治理与自动资产抽取</li>
+        <li>多智能体协作与持续评测</li>
+        <li>部门榜单、贡献激励、专家网络</li>
+        <li>自动资产抽取与规则建议</li>
+        <li>更复杂的人机协作研发场景</li>
+      </ul>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ================================================================ -->
+<!-- SLIDE 3: PHASE 1 PLAN + METRICS + KEY LOOPS -->
+<!-- ================================================================ -->
+<div class="slide" data-index="3">
+<div class="slide-content">
+  <div class="section-title">一期计划</div>
+  <div class="section-subtitle"><span class="highlight">做出来不算成功，用起来才算</span>。两个关键闭环确保平台长期健康运行。</div>
+
+  <div class="phase1-grid">
+    <div class="p1-card">
+      <h4>📦 一期完成内容</h4>
+      <ul>
+        <li><strong>产品闭环：</strong>需求→分级→Plan→生成→测试→发布→运行→退出全链路可用</li>
+        <li><strong>工程底座：</strong>受控页面/逻辑/数据/后端生成，版本、灰度、回滚</li>
+        <li><strong>银行集成：</strong>SSO对接、小程序平台发布、首批高复用能力接入</li>
+        <li><strong>安全治理：</strong>身份、权限、数据、代码、发布门禁 + 全链路审计</li>
+        <li><strong>真实应用：</strong>3-5个生产场景上线持续使用，≥1个可复用模板</li>
+        <li><strong>运营机制：</strong>Owner、种子用户、基础培训、服务台、下线机制实际运行</li>
+      </ul>
+    </div>
+    <div class="p1-card">
+      <h4>🚀 一期运营建议</h4>
+      <ul>
+        <li><strong>冷启动：</strong>选 2-3 个试点部门，招募 20-50 名种子用户，筛选 3-5 个真实场景</li>
+        <li><strong>数据决定扩围：</strong>五条门槛同时达标才向更多部门开放，不按时间表扩围</li>
+      </ul>
+    </div>
+
+    <!-- North star + metrics -->
+    <div class="p1-card full" style="background:linear-gradient(135deg,var(--navy),var(--navy-light));color:var(--white)">
+      <h4 style="color:var(--white)">🎯 北极星指标：月度产生可验证业务价值的活跃生产应用数</h4>
+      <div style="font-size:12px;opacity:.75">"有效应用" = 当月有真实用户完成有效任务 + 无严重质量安全问题 + 未被认定为重复或废弃</div>
+    </div>
+
+    <div class="p1-card full">
+      <h4>📐 一期完成里程碑</h4>
+      <div class="metric-inline">
+        <div class="mi"><div class="val">3-5</div><div class="lbl">真实场景上线<br>并持续使用</div></div>
+        <div class="mi"><div class="val">全链路</div><div class="lbl">需求→发布→运行<br>→退出闭环完整</div></div>
+        <div class="mi"><div class="val">稳定可控</div><div class="lbl">灰度、回滚、熔断<br>演练成功</div></div>
+        <div class="mi"><div class="val">零重大事件</div><div class="lbl">越界调用和越权<br>能被识别阻断</div></div>
+        <div class="mi"><div class="val">机制运行</div><div class="lbl">Owner、服务台、复盘<br>和退出机制实际运行</div></div>
+      </div>
+    </div>
+
+    <div class="p1-card full" style="background:var(--gold-pale);border:1px solid var(--gold-light)">
+      <h4 style="color:var(--navy)">🔑 扩围门槛 — 五条同时满足才扩围</h4>
+      <div class="gate-tags">
+        <span style="background:var(--white);padding:6px 12px;border-radius:14px">📊 <strong>价值：</strong>试点应用有真实活跃和可验证收益</span>
+        <span style="background:var(--white);padding:6px 12px;border-radius:14px">✅ <strong>质量：</strong>主链路稳定，严重缺陷在阈值内</span>
+        <span style="background:var(--white);padding:6px 12px;border-radius:14px">🛡 <strong>安全：</strong>无重大事件，审计机制通过复核</span>
+        <span style="background:var(--white);padding:6px 12px;border-radius:14px">👥 <strong>运营：</strong>服务台、Owner和培训可承载新增用户</span>
+        <span style="background:var(--white);padding:6px 12px;border-radius:14px">🧩 <strong>能力：</strong>高频缺口有建设计划，不依赖人工兜底</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Key loops - compact version at bottom -->
+  <div class="loop-compact">
+    <div class="loop-box" style="border-left:3px solid var(--orange)">
+      <h4>🔄 能力缺口闭环</h4>
+      <div class="loop-flow">
+        <span style="background:#e8f0fe">👤 员工要"自动带出客户档案"</span>
+        <span style="color:var(--text-muted)">↓ 能力中心无此能力</span>
+        <span style="background:#fdecea;font-weight:600">🚫 AI 不猜接口 → 生成缺口工单</span>
+        <span style="color:var(--text-muted)">↓ 总行科技收到</span>
+        <span style="background:#e8f5e9">🔧 封装"客户档案查询"组件上线</span>
+        <span style="color:var(--text-muted)">↓</span>
+        <span style="background:var(--gold-pale)">✅ 通知员工 → 重新生成应用成功</span>
+      </div>
+      <div class="loop-note"><strong>核心：</strong>AI 禁止猜测接口和字段 · 能力缺失 = 工单 ≠ 假装能做</div>
+    </div>
+    <div class="loop-box" style="border-left:3px solid var(--green)">
+      <h4>🔄 应用生命周期闭环</h4>
+      <div style="display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:6px;font-size:11px;margin-bottom:8px">
+        <span class="badge badge-blue">想法</span><span style="color:var(--text-muted)">→</span>
+        <span class="badge badge-blue">评估</span><span style="color:var(--text-muted)">→</span>
+        <span class="badge badge-gold">孵化</span><span style="color:var(--text-muted)">→</span>
+        <span class="badge badge-gold">试运行</span><span style="color:var(--text-muted)">→</span>
+        <span class="badge badge-green">正式运行</span><span style="color:var(--text-muted)">→</span>
+        <span class="badge badge-green">推广</span>
+      </div>
+      <div style="font-size:11px;color:var(--text-secondary);text-align:center;margin-bottom:8px">持续监测：活跃度 · 故障率 · 用户反馈 · Owner有效性</div>
+      <div style="display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:6px;font-size:11px">
+        <span class="badge" style="background:#fff3e0;color:#e67e22">整改</span><span style="color:var(--text-muted)">→</span>
+        <span class="badge" style="background:#fdecea;color:#c0392b">休眠</span><span style="color:var(--text-muted)">→</span>
+        <span class="badge" style="background:#ffebee;color:#b71c1c">下线归档</span>
+      </div>
+      <div class="loop-note"><strong>下线条件：</strong>连续90-180天无使用 · Owner离岗无人接管 · 已有替代 · 安全或合规风险不可接受</div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- ================================================================ -->
+<!-- SLIDE 4: ROLE MATRIX -->
+<!-- ================================================================ -->
+<div class="slide" data-index="4">
+<div class="slide-content" style="max-width:1300px">
+  <div class="section-title">角色矩阵：谁进来 · 做什么 · 担什么责</div>
+  <div class="section-subtitle">不同层级、不同角色，各有入口、各有职责。<span class="highlight">点击格子查看详情</span>。</div>
+  <div class="matrix-wrap">
+    <table class="matrix-table">
+      <thead>
+        <tr>
+          <th class="org">组织层级</th>
+          <th>💡 业务创新者</th><th>✅ 业务 Owner</th>
+          <th>🔧 总行科技</th><th>📊 平台运营</th><th>📈 管理者</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="org" style="font-weight:700;background:#e8f0fe;color:var(--navy)">🏛 总行</td>
+          <td class="clickable" onclick="openRoleDrill('业务创新者','总行','总行业务骨干','在AI对话首页用自然语言描述跨部门场景的业务痛点与期望产出，AI澄清后生成应用初稿；在应用市场浏览/基于模板创建应用；在我的应用管理已创建应用，进入画布编辑器修改、发布，主动收集使用反馈推动迭代','AI对话首页 · 应用市场 · 我的应用','应用能否解决业务问题、带动他人使用')">
+            业务骨干<br>创建应用
+          </td>
+          <td class="clickable" onclick="openRoleDrill('业务 Owner','总行','部门负责人 / 指定责任人','在审核列表查看待审核的发布申请，查看审核详情（抽屉），执行通过/驳回操作，预览已通过的应用','审核列表','应用出了问题第一责任人')">
+            部门负责人<br>验收负责
+          </td>
+          <td class="clickable" rowspan="3" style="background:#f0f4f8" onclick="openRoleDrill('总行科技','总行（全行统一）','总行科技部研发人员','【能力建设】在能力列表注册/编辑/停用启用企业能力（API/组件/数据服务），遵循组件优先原则——科技建能力、AI做编排，禁止AI猜测接口；一期完成首批高复用能力接入（如客户档案查询、审批、消息、组织、文件等）；持续监控已上线能力的调用次数、可用性、响应时间等 SLA 指标。<br>【缺口响应】在缺口工单处理能力缺口：收到工单→评估→封装→上架→通知申请人；一期建立工单闭环机制。<br>【技术治理】在规则配置新增/启停安全与数据治理规则（禁止未授权API、敏感数据脱敏、禁止硬编码密钥等）。<br>【代码规则】在代码规则维护维护代码生成模板、命名规范、UI 规范、接口规范、安全规则等，确保 AI 生成的代码符合行内标准；规则变更后影响新应用生成，需提前通知业务方。<br>【环境管理】在环境管理新增/编辑环境配置（开发/测试/灰度/生产），多环境隔离；持续监控运行状态、CPU/内存使用率，异常告警。<br>【部署治理】配置自动部署的环境映射规则、灰度策略、回滚机制；与运维确认部署窗口与回滚预案。<br>【需要对接配合】<br>· 能力建设：与各业务系统 Owner 对接获取 API 接口文档与鉴权方式，封装客户档案查询、审批、消息、组织、文件等高复用能力；能力上架需提供文档 URL、调用示例、SLA 承诺。<br>· 缺口响应：收到业务方缺口工单后，与原系统 Owner 协调接口权限与联调，封装完成后通知申请人并上架到能力列表。<br>· 规则配置：与安全 / 合规部门确认安全规则与数据脱敏规则，规则生效后影响全应用生成，需提前通知业务方。<br>· 代码规则：与架构 / 安全团队确认代码生成模板、命名规范、UI 规范、接口规范、安全规则，规则变更影响新应用生成，需提前通知业务方。<br>· 环境管理：与运维 / 基础设施团队协调环境资源（CPU、内存、域名），多环境隔离（命名空间 / 独立集群）需运维配合部署。<br>· 部署治理：与运维团队确认自动部署的环境映射、灰度策略、回滚预案，与运维确认部署窗口。','能力列表 · 缺口工单 · 规则配置 · 环境管理','能力的SLA和安全性、缺口闭环时效、平台运行稳定、安全规则有效')">
+            能力建设<br>缺口响应<br>技术治理<br>代码规则<br>环境管理<br>部署治理
+          </td>
+          <td class="clickable" rowspan="3" style="background:#e8f5e9" onclick="openRoleDrill('平台运营','总行（全行统一）','数字化运营 / 创新管理部门','【运营驾驶舱】查看活跃应用数/月活用户/月度使用次数/应用健康率等运营数据，查看使用趋势、应用健康分布、TOP5应用排行，监测活跃度、故障率、用户反馈。<br>【应用管理】查看已孵化应用列表，配置推广范围（全行/指定机构/指定部门），预览应用。','运营驾驶舱 · 应用管理','平台有人用、应用不腐化')">
+            运营驾驶舱<br>应用管理
+          </td>
+          <td class="clickable" onclick="openRoleDrill('管理者','总行','分管行领导 / 运营委员会','在管理驾驶舱查看总行视角的KPI指标（场景数/智能体数/调用量/覆盖员工），查看趋势图表、分行排行、应用组合、风险概览','管理驾驶舱','方向决策、资源审批、扩围判断')">
+            行领导<br>运营委员会
+          </td>
+        </tr>
+        <tr>
+          <td class="org" style="font-weight:700;background:#f0f4f8;color:var(--navy)">🏬 分行</td>
+          <td class="clickable" onclick="openRoleDrill('业务创新者','分行','分行数字化联络人 / 业务骨干','发现分行高频需求，在AI对话首页描述需求；AI生成应用初稿后在画布编辑器调试验证；在我的应用管理已创建应用，协助支行推广使用，收集反馈推动迭代','AI对话首页 · 应用市场 · 我的应用','场景真实、应用有人用')">
+            数字化联络人<br>创建分行应用
+          </td>
+          <td class="clickable" onclick="openRoleDrill('业务 Owner','分行','分行业务负责人','在审核列表查看待审核的分行级应用申请，执行通过/驳回操作','审核列表','应用使用范围不出分行')">
+            业务负责人<br>确认范围
+          </td>
+          <td class="clickable" onclick="openRoleDrill('管理者','分行','分行领导','在管理驾驶舱切换分行视角，查看本分行KPI指标、部门排行、部门使用明细','管理驾驶舱','分行推广决策')">
+            分行领导<br>看分行数据
+          </td>
+        </tr>
+        <tr>
+          <td class="org" style="font-weight:700;background:var(--gold-pale);color:var(--gold)">🏪 支行</td>
+          <td class="clickable" onclick="openRoleDrill('业务创新者','支行','种子用户 · 综合岗骨干','把日常重复劳动（拜访登记、台账汇总、材料收集等）在AI对话首页描述成需求；AI生成应用后预览验证；在我的应用管理已创建应用，从自己用到带动同事用','AI对话首页 · 应用市场 · 我的应用','从自己用到带动别人用')">
+            种子用户<br>变重复劳动为工具
+          </td>
+          <td class="clickable" onclick="openRoleDrill('业务 Owner','支行','支行行长 / 指定负责人','在审核列表查看待审核的支行级应用申请，执行通过/驳回操作','审核列表','支行应用不出问题')">
+            支行行长<br>组织试用
+          </td>
+          <td class="clickable" onclick="openRoleDrill('管理者','支行','支行行长','在管理驾驶舱切换支行视角，查看本支行KPI指标和使用情况','管理驾驶舱','支行使用推广')">
+            支行行长<br>看使用效果
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+</div>
+
+</div><!-- /#app -->
+
+<!-- ===== BOTTOM DOTS ===== -->
+<div class="nav-bottom" id="navBottom"></div>
+
+<script>
+const TOTAL = 5;
+const sideLabels = ['封面','全景蓝图','分期路线','一期计划','角色矩阵'];
+const notes = [
+  '30分钟讲四件事：痛点看懂了。完整体系。三步走。第一步做出来什么样，待会看原型。',
+  '全场总纲。从上往下讲：痛点（1分钟）→ 四中心架构（2分钟）→ 角色分工 + 9步流程（2分钟）。讲完这页客户就能理解整件事的全貌。',
+  '不是一次建完。一期跑通受控生产链。二、三期只在一期证明价值后才启动。二期重点：能力资产化+培训社区+运营制度化。三期：智能化+生态化。',
+  '一期做什么 + 怎么算成功 + 两个关键闭环。完成内容→运营建议→北极星→完成里程碑→扩围门槛→闭环收尾→引出原型。',
+  '全景页看到角色挂在哪，这一页下钻每个格子的完整职责。重点讲业务创新者、总行科技、平台运营三个核心角色。'
+];
+
+let current = 0;
+
+function init(){
+  buildSideNav();
+  buildDots();
+  goTo(0);
+  document.addEventListener('keydown',e=>{
+    if(e.key==='ArrowRight'||e.key==='ArrowDown'){e.preventDefault();nextSlide()}
+    if(e.key==='ArrowLeft'||e.key==='ArrowUp'){e.preventDefault();prevSlide()}
+    if(e.key==='Escape')closeDrill();
+  });
+}
+function buildSideNav(){
+  const sn=document.getElementById('sideNav');
+  sn.innerHTML=sideLabels.map((l,i)=>`
+    <div class="side-nav-item" onclick="goTo(${i})" title="${l}">
+      <span class="side-nav-label">${l}</span>
+      <span class="side-nav-dot"></span>
+    </div>
+  `).join('');
+}
+function buildDots(){
+  const nb=document.getElementById('navBottom');
+  nb.innerHTML='';
+  for(let i=0;i<TOTAL;i++){
+    const d=document.createElement('button');
+    d.className='nav-dot';
+    d.title=`第${i+1}页`;
+    d.onclick=()=>goTo(i);
+    nb.appendChild(d);
+  }
+}
+function goTo(i){
+  current=Math.max(0,Math.min(TOTAL-1,i));
+  document.querySelectorAll('.slide').forEach((s,idx)=>s.classList.toggle('active',idx===current));
+  document.querySelectorAll('.nav-dot').forEach((d,idx)=>d.classList.toggle('active',idx===current));
+  document.querySelectorAll('.side-nav-item').forEach((d,idx)=>d.classList.toggle('active',idx===current));
+  document.getElementById('topbarFill').style.width=((current+1)/TOTAL*100)+'%';
+  document.getElementById('navLabel').textContent=`${current+1} / ${TOTAL}`;
+  document.querySelector('.slide.active')?.scrollTo(0,0);
+}
+function nextSlide(){if(current<TOTAL-1)goTo(current+1)}
+function prevSlide(){if(current>0)goTo(current-1)}
+
+
+// ===== DRILL CONTENT DATA =====
+const DRILL = {
+  c1: {
+    title: "需求创新中心", icon: "📋",
+    problem: "解决：员工不知道怎么描述需求、说不清楚要做什么",
+    caps: [
+      "自然语言需求录入 —— 员工用大白话描述业务问题",
+      "多轮 AI 追问澄清 —— 自动补全目标、流程、数据、权限、验收标准",
+      "结构化需求卡生成 —— 模糊想法变成可确认的需求文档",
+      "L0-L3 自动分级 —— L0个人工具仅本人 / L1独立轻应用部门内 / L2企业能力组合跨部门审批 / L3复杂关键转专业研发",
+      "能力匹配与可行性判断 —— 检索已有应用、模板、API、组件；缺失能力不猜接口、生成缺口工单",
+      "Plan 方案生成与确认 —— 页面结构、数据实体、能力依赖、验收点一目了然",
+      "页面原型预览 —— 生成前先看效果，确认后再进入开发",
+      "已有应用/模板检索推荐 —— 新建前先搜，避免重复造轮子",
+      "附件理解 —— Word / PDF / 图片 / 表格中的流程和字段自动提取",
+      "需求发现来源扩展 —— 工单分析、重复手工流程、Excel 宏迁移、应用反馈聚合"
+    ]
+  },
+  c2: {
+    title: "应用生产中心", icon: "⚡",
+    problem: "解决：业务人员不会写代码、从方案到应用有断层",
+    caps: [
+      "多页面应用生成 —— 小程序 + PC 页面、导航、布局一键生成",
+      "行内 UI 设计规范自动套用 —— 颜色、字体、组件符合银行标准",
+      "自然语言对话修改 —— 「把拜访日期放到第一列」「加客户名搜索框」",
+      "元素级精准修改 —— 选中具体组件局部调整，不影响其他区域",
+      "Mock 数据实时预览 —— 按数据契约生成模拟数据，先确认流程再联调",
+      "轻量数据模型与后端生成 —— 数据表、接口、业务逻辑自动创建",
+      "自动测试与安全扫描 —— SAST / SCA / Secret 检测 / SBOM 物料清单",
+      "预览调试环境 —— 应用在独立环境运行调试，不影响正式环境",
+      "版本管理与一键回滚 —— 每次修改保存物理版本，出问题一键恢复",
+      "专业研发接管包 —— 复杂应用一键导出完整工程文档交研发接手"
+    ]
+  },
+  c3: {
+    title: "企业能力中心", icon: "🧩",
+    problem: "解决：重复造轮子、AI瞎猜接口和数据、能力无法沉淀",
+    caps: [
+      "能力列表管理 —— 注册/编辑/启停企业能力（API/组件/数据服务），版本管理、SLA 监控、引用追踪、调用次数展示",
+      "能力缺口工单闭环 —— 缺能力 → 自动生成工单 → 科技评估建设 → 上线 → 通知需求方",
+      "能力缺口池聚合排序 —— 按频次、覆盖人数、业务价值、建设成本驱动投资",
+      "规则配置 —— 安全规则、数据脱敏、密钥管理、规则启停与版本管理，影响全应用生成",
+      "代码规则维护 —— 代码生成模板、命名规范、UI 规范、接口规范、安全规则，确保 AI 生成代码符合行内标准",
+      "环境配置 —— 开发/测试/灰度/生产多环境隔离，运行状态、CPU/内存监控，异常告警",
+      "能力健康度与影响分析 —— 跟踪引用数、调用量、故障率、变更影响范围",
+      "部署治理 —— 自动部署环境映射、灰度策略、回滚机制、部署日志"
+    ]
+  },
+  c4: {
+    title: "运营治理中心", icon: "📊",
+    problem: "解决：上线后没人管、不知道有没有价值、僵尸应用堆积",
+    caps: [
+      "运营指标概览 —— 活跃应用数、月活用户、月度使用次数、应用健康率四项核心指标实时展示",
+      "使用趋势分析 —— 按月度展示使用次数趋势，支持本月/本季度/本年切换",
+      "应用健康分布 —— 健康率展示，区分健康应用与关注应用",
+      "TOP5 应用排行 —— 按月活用户排序，展示应用名称、作者、月活、调用次数、评分",
+      "应用台账管理 —— 已孵化应用列表，含创建人、创建日期、发布日期、推广状态、上下架状态、可见范围",
+      "推广范围配置 —— 支持全行可见 / 指定机构 / 指定部门三种推广范围，按需配置",
+      "应用上下架管理 —— 上架 / 下架状态管理，下架后应用市场不再展示",
+      "应用详情与预览 —— 抽屉式详情，含应用基本信息、推广状态、可见范围，支持预览应用"
+    ]
+  }, base: {
+    title: "能力底座", icon: "🔧",
+    problem: "解决：身份/权限/安全/审计各自为政",
+    caps: [
+      "模型白名单与安全路由 —— 可用模型经过审批，调用链路可追溯",
+      "SSO 统一身份接入 —— 对接行内组织、用户、岗位体系，身份信息一键同步",
+      "RBAC / ABAC 细粒度授权 —— 用户+应用双重身份校验，仅登录不等于有数据权限",
+      "数据分级分类与脱敏 —— 敏感字段自动识别，展示、日志、测试数据按规则脱敏",
+      "代码与供应链安全 —— SAST / SCA / Secret 检测 / 依赖白名单 / SBOM",
+      "提示注入防护与内容合规 —— 恶意指令识别、越权工具调用阻断",
+      "全链路审计 —— 需求→生成→审批→部署→数据调用，全程留痕可追溯",
+      "日志/指标/链路可观测 —— 访问量、错误率、性能、模型调用成本统一采集",
+      "一键停用应急 —— 高风险应用秒级撤入口、停服务，操作需授权留痕"
+    ]
+  },
+  data: {
+    title: "数据管理中心", icon: "📈",
+    problem: "解决：总行/分行领导看不到全局数据、决策缺数据支撑",
+    caps: [
+      "管理驾驶舱 —— 面向总行领导和运营委员会：北极星指标（月度产生可验证业务价值的活跃生产应用数）、五维仪表盘（价值/质量/安全/运营/能力）、扩围评审决策依据",
+      "分行看板 —— 面向分行领导：本分行应用数量、活跃情况、节省工时、覆盖人数，支持按部门和时间下钻",
+      "应用组合分析 —— 按部门/等级/状态/风险查看全行应用分布，识别僵尸应用和重复建设",
+      "价值台账 —— 自动计算节省工时（基准耗时差×有效执行次数），支持业务Owner确认口径和抽样核验",
+      "风险概览 —— 安全事件、越权访问、审计覆盖率、高危漏洞趋势，一键下钻至具体应用",
+      "成本归因 —— 按应用/部门归集模型调用成本、运行资源成本、运维支持成本",
+      "扩围决策支持 —— 五条门槛数据实时更新：价值有验证、质量有保障、安全无事件、运营可承载、能力有规划"
+    ]
+  }
+};
+
+function openArchDrillByKey(key) {
+  var d = DRILL[key];
+  if (!d) return;
+  var capsHtml = "";
+  for (var i = 0; i < d.caps.length; i++) {
+    capsHtml += "<div class=\"dc-item\"><span class=\"dc-num\">" + (i+1) + "</span><span class=\"dc-text\">" + d.caps[i] + "</span></div>";
+  }
+  var panel = document.getElementById("drillPanel");
+  panel.innerHTML = "<button class=\"drill-close\" onclick=\"closeDrill()\">✕</button>" +
+    "<div style=\"font-size:32px;margin-bottom:8px\">" + d.icon + "</div>" +
+    "<div class=\"drill-title\">" + d.title + "</div>" +
+    "<div class=\"drill-subtitle\">" + d.problem + "</div>" +
+    "<div class=\"drill-section\"><h4>完整能力规划</h4><div class=\"drill-cap-list\">" + capsHtml + "</div></div>";
+  openDrillPanel();
+}
+
+function openArchDrill(title,icon,problem,capabilities){
+  const panel=document.getElementById('drillPanel');
+  panel.innerHTML=`
+    <button class="drill-close" onclick="closeDrill()">✕</button>
+    <div style="font-size:32px;margin-bottom:8px">${icon}</div>
+    <div class="drill-title">${title}</div>
+    <div class="drill-subtitle">${problem}</div>
+    <div class="drill-section"><h4>完整能力规划（分阶段）</h4><div class="content">${capabilities}</div></div>
+  `;
+  openDrillPanel();
+}
+function openStepDrill(num,title,what,output){
+  const panel=document.getElementById('drillPanel');
+  panel.innerHTML=`
+    <button class="drill-close" onclick="closeDrill()">✕</button>
+    <div style="font-size:32px;margin-bottom:8px">🔢</div>
+    <div class="drill-title">第${num}步：${title}</div>
+    <div class="drill-section"><h4>系统做什么</h4><div class="content">${what}</div></div>
+    <div class="drill-section"><h4>产出</h4><div class="content">${output}</div></div>
+  `;
+  openDrillPanel();
+}
+function openRoleDrill(role,level,who,tasks,entry,responsibility){
+  const panel=document.getElementById('drillPanel');
+  panel.innerHTML=`
+    <button class="drill-close" onclick="closeDrill()">✕</button>
+    <div style="font-size:13px;color:var(--text-muted);margin-bottom:4px">${level}</div>
+    <div class="drill-title">${role}</div>
+    <div class="drill-section"><h4>在平台做什么</h4><div class="content">${tasks}</div></div>
+    <div class="drill-section"><h4>平台入口 / 看到什么</h4><div class="content">${entry}</div></div>
+    <div class="drill-section"><h4>关键责任</h4><div class="content" style="color:var(--navy);font-weight:600">${responsibility}</div></div>
+  `;
+  openDrillPanel();
+}
+function openDrillPanel(){
+  document.getElementById('drillOverlay').classList.add('open');
+  document.getElementById('drillPanel').classList.add('open');
+  document.getElementById('drillPanel').scrollTo(0,0);
+}
+function closeDrill(){
+  document.getElementById('drillOverlay').classList.remove('open');
+  document.getElementById('drillPanel').classList.remove('open');
+}
+init();
+</script>
+
+</body>
+</html>
