@@ -149,7 +149,7 @@
 <div id="lock-screen">
   <div class="lock-box" id="lock-box">
     <div class="lock-icon">🔒</div>
-    <div class="lock-title">AI产品经理的底牌</div>
+    <div class="lock-title">唯安分享 · AI产品经理的底牌</div>
     <div class="lock-sub">本内容受密码保护，请输入密码查看</div>
     <input class="lock-input" id="lock-input" type="password" inputmode="numeric" maxlength="16" placeholder="请输入密码" autocomplete="off">
     <button class="lock-btn" id="lock-btn">解锁</button>
@@ -160,7 +160,6 @@
 (function () {
   // 密码的 SHA-256 摘要（避免明文出现在源码中）
   var TARGET = '3ce2bbc0dd463c0e56174e339cf4bbacbd0c45d9e3a577450957d4a52c67fe48';
-  var KEY = 'weian_dipai_unlocked';
 
   var screen_ = document.getElementById('lock-screen');
   var box = document.getElementById('lock-box');
@@ -168,21 +167,14 @@
   var btn = document.getElementById('lock-btn');
   var err = document.getElementById('lock-err');
 
-  function unlock(instant) {
-    try { sessionStorage.setItem(KEY, '1'); } catch (e) {}
-    if (instant) { screen_.style.transition = 'none'; }
+  function unlock() {
     screen_.classList.add('unlocked');
-    setTimeout(function () { screen_.remove(); }, instant ? 50 : 700);
+    setTimeout(function () { screen_.remove(); }, 700);
     document.documentElement.style.overflow = '';
     document.body.style.overflow = '';
   }
 
-  // 本会话内已解锁过则直接放行
-  try {
-    if (sessionStorage.getItem(KEY) === '1') { unlock(true); return; }
-  } catch (e) {}
-
-  // 锁定背景滚动
+  // 每次打开都必须输密码，锁定背景滚动
   document.documentElement.style.overflow = 'hidden';
   document.body.style.overflow = 'hidden';
 
@@ -256,7 +248,7 @@
     var v = (input.value || '').trim();
     if (!v) { input.focus(); return; }
     sha256(v).then(function (h) {
-      if (h === TARGET) { unlock(false); } else { fail(); }
+      if (h === TARGET) { unlock(); } else { fail(); }
     });
   }
 
